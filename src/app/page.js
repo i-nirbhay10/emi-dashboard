@@ -82,6 +82,80 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+        {/* Recent Orders */}
+        <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+            <h2 className="text-base font-bold text-slate-900">Recent Orders</h2>
+            <button className="text-sm font-medium text-green-600 hover:text-green-700 transition-colors">View All Orders</button>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-100">
+              <thead className="bg-slate-50/50">
+                <tr>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Order ID</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Customer</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Amount</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-slate-100">
+                {[
+                  { id: "ORD-9284", customer: "Amit Patel", status: "Processing", amount: "₹45,000", badge: "bg-blue-50 text-blue-700 border-blue-200" },
+                  { id: "ORD-9283", customer: "Sneha Gupta", status: "Shipped", amount: "₹1,20,500", badge: "bg-amber-50 text-amber-700 border-amber-200" },
+                  { id: "ORD-9282", customer: "Rahul Sharma", status: "Delivered", amount: "₹8,500", badge: "bg-green-50 text-green-700 border-green-200" },
+                  { id: "ORD-9281", customer: "Vikram Singh", status: "Delivered", amount: "₹34,200", badge: "bg-green-50 text-green-700 border-green-200" },
+                ].map((order, i) => (
+                  <tr key={i} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-mono font-medium text-slate-600">{order.id}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 font-medium">{order.customer}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${order.badge}`}>
+                        {order.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-900 text-right">{order.amount}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Low Stock Alerts */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+          <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+              Low Stock Alerts
+            </h2>
+          </div>
+          <div className="p-6 space-y-5 flex-1">
+            {[
+              { name: "Exide Tubular Battery 150Ah", sku: "ETB-150", left: 0, status: "Out of Stock" },
+              { name: "Microtek Hybrid Inverter", sku: "MHI-200", left: 2, status: "Critical" },
+              { name: "Solar Cable 4sqmm (100m)", sku: "CBL-004", left: 5, status: "Low" },
+            ].map((item, i) => (
+              <div key={i} className="flex justify-between items-start pb-5 border-b border-slate-100 last:border-0 last:pb-0">
+                <div>
+                  <p className="text-sm font-semibold text-slate-900 leading-tight">{item.name}</p>
+                  <p className="text-xs text-slate-500 font-mono mt-1">{item.sku}</p>
+                </div>
+                <div className="text-right">
+                  <p className={`text-sm font-bold ${item.left === 0 ? 'text-red-600' : 'text-amber-600'}`}>
+                    {item.left} left
+                  </p>
+                  <p className="text-xs text-slate-400 mt-1">{item.status}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="p-4 border-t border-slate-100 bg-slate-50/50 text-center">
+            <button className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">Manage Inventory &rarr;</button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

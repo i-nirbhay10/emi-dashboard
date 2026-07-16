@@ -1,5 +1,3 @@
-import React from 'react';
-
 export default function OrdersPage() {
   const orders = [
     { id: '#ORD-001', customer: 'Rahul Sharma', amount: '₹14,500', status: 'Processing', date: 'Oct 24, 2023', items: 2 },
@@ -49,6 +47,7 @@ export default function OrdersPage() {
                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Customer</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
                 <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Total</th>
+                <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-slate-100">
@@ -72,6 +71,16 @@ export default function OrdersPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-slate-900">{order.amount}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button className="text-blue-600 hover:text-blue-800" title="Generate Invoice">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                      </button>
+                      <button className="text-red-600 hover:text-red-800" title="Issue Refund">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
