@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 
 export default function UsersPage() {
   const users = [
@@ -14,10 +15,10 @@ export default function UsersPage() {
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Users & Roles</h1>
           <p className="text-sm text-slate-500 mt-1">Manage admin team access, roles, and permissions.</p>
         </div>
-        <button className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 shadow-sm shadow-green-600/20 transition-all flex items-center gap-2">
+        <Link href="/users/new" className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 shadow-sm shadow-green-600/20 transition-all flex items-center gap-2">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
           Invite User
-        </button>
+        </Link>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">

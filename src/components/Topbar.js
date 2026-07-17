@@ -1,4 +1,16 @@
+"use client";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+
 export default function Topbar({ onMenuClick }) {
+  const router = useRouter();
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  const handleLogout = () => {
+    localStorage.removeItem('emi_admin_auth');
+    router.push('/login');
+  };
+
   return (
     <header className="h-16 bg-white flex items-center justify-between px-4 md:px-8 border-b border-slate-100 z-10 shadow-sm shrink-0">
       <div className="flex-1 flex items-center gap-4">
@@ -19,15 +31,36 @@ export default function Topbar({ onMenuClick }) {
           <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
         </button>
         <div className="h-6 w-px bg-slate-200"></div>
-        <div className="flex items-center gap-3 cursor-pointer group">
-          <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-sm font-bold text-green-700 group-hover:ring-2 ring-green-500 ring-offset-2 transition-all">
-            AD
+        <div className="relative">
+          <div 
+            className="flex items-center gap-3 cursor-pointer group"
+            onClick={() => setShowDropdown(!showDropdown)}
+          >
+            <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-sm font-bold text-green-700 group-hover:ring-2 ring-green-500 ring-offset-2 transition-all">
+              AD
+            </div>
+            <div className="hidden md:block">
+              <p className="text-sm font-medium text-slate-700">Admin User</p>
+              <p className="text-xs text-slate-500">admin@energymall.in</p>
+            </div>
+            <svg className={`w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-transform ${showDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
           </div>
-          <div className="hidden md:block">
-            <p className="text-sm font-medium text-slate-700">Admin User</p>
-            <p className="text-xs text-slate-500">admin@energymall.in</p>
-          </div>
-          <svg className="w-4 h-4 text-slate-400 group-hover:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+
+          {showDropdown && (
+            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-100 py-1 z-50">
+              <div className="px-4 py-2 border-b border-slate-100 md:hidden">
+                <p className="text-sm font-medium text-slate-700">Admin User</p>
+                <p className="text-xs text-slate-500 truncate">admin@energymall.in</p>
+              </div>
+              <button 
+                onClick={handleLogout}
+                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                Logout
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>
