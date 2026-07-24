@@ -1,33 +1,42 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002/api/v1/admin';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002/api/v1/admin';
 
 async function apiRequest(endpoint, options = {}) {
   try {
-    const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const res = await fetch(`${API_BASE}${endpoint}`, {
       headers: {
         'Content-Type': 'application/json',
         ...options.headers,
       },
       ...options,
     });
-    const result = await res.json();
-    if (result.success) {
-      return result.data;
+    if (!res.ok) {
+      console.warn(`API HTTP error! status: ${res.status} for ${endpoint}`);
+      return null;
     }
-    throw new Error(result.error || result.message || 'API Request failed');
-  } catch (err) {
-    console.warn(`[API Call Failed: ${endpoint}]`, err.message);
+    const json = await res.json();
+    return json.data || json;
+  } catch (error) {
+    console.error(`API Fetch Error (${endpoint}):`, error);
     return null;
   }
 }
 
-// Overview & Analytics API
+// Overview KPI Analytics
+export async function getDashboardStats() {
+  return await apiRequest('/analytics/overview');
+}
+
 export async function getAnalyticsOverview() {
-  return await apiRequest('/analytics');
+  return await apiRequest('/analytics/overview');
 }
 
 // Products API
 export async function getProducts() {
   return await apiRequest('/products');
+}
+
+export async function getProductById(id) {
+  return await apiRequest(`/products/${id}`);
 }
 
 export async function createProduct(data) {
@@ -76,15 +85,20 @@ export async function deleteCategory(id) {
 }
 
 // Orders API
-export async function getOrders(status = 'All') {
-  const query = status && status !== 'All' ? `?status=${encodeURIComponent(status)}` : '';
-  return await apiRequest(`/orders${query}`);
+export async function getOrders() {
+  return await apiRequest('/orders');
 }
 
 export async function updateOrderStatus(id, status) {
-  return await apiRequest(`/orders/${id}/status`, {
-    method: 'PATCH',
+  return await apiRequest(`/orders/${id}`, {
+    method: 'PUT',
     body: JSON.stringify({ status }),
+  });
+}
+
+export async function deleteOrder(id) {
+  return await apiRequest(`/orders/${id}`, {
+    method: 'DELETE',
   });
 }
 
@@ -125,6 +139,19 @@ export async function createOffer(data) {
   });
 }
 
+export async function updateOffer(id, data) {
+  return await apiRequest(`/offers/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteOffer(id) {
+  return await apiRequest(`/offers/${id}`, {
+    method: 'DELETE',
+  });
+}
+
 // Banners API
 export async function getBanners() {
   return await apiRequest('/banners');
@@ -134,6 +161,19 @@ export async function createBanner(data) {
   return await apiRequest('/banners', {
     method: 'POST',
     body: JSON.stringify(data),
+  });
+}
+
+export async function updateBanner(id, data) {
+  return await apiRequest(`/banners/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteBanner(id) {
+  return await apiRequest(`/banners/${id}`, {
+    method: 'DELETE',
   });
 }
 
@@ -149,14 +189,15 @@ export async function createContentPage(data) {
   });
 }
 
-// Users API
-export async function getUsers() {
-  return await apiRequest('/users');
+export async function updateContentPage(id, data) {
+  return await apiRequest(`/content/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
 }
 
-export async function createUser(data) {
-  return await apiRequest('/users', {
-    method: 'POST',
-    body: JSON.stringify(data),
+export async function deleteContentPage(id) {
+  return await apiRequest(`/content/${id}`, {
+    method: 'DELETE',
   });
 }
