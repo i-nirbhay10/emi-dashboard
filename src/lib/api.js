@@ -100,6 +100,19 @@ export async function createCustomer(data) {
   });
 }
 
+export async function updateCustomer(id, data) {
+  return await apiRequest(`/customers/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteCustomer(id) {
+  return await apiRequest(`/customers/${id}`, {
+    method: 'DELETE',
+  });
+}
+
 // Offers API
 export async function getOffers() {
   return await apiRequest('/offers');
