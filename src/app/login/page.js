@@ -1,29 +1,45 @@
 "use client";
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { getUsers } from '../../lib/api';
+import { useAuth } from '../../context/AuthContext';
 
 export default function LoginPage() {
-  const router = useRouter();
+  const { login } = useAuth();
   const [email, setEmail] = useState('admin@energymall.in');
   const [password, setPassword] = useState('password123');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
 
-    // Dummy authentication delay
-    setTimeout(() => {
-      if (email === 'admin@energymall.in' && password === 'password123') {
-        localStorage.setItem('emi_admin_auth', 'true');
-        router.push('/');
+    try {
+      const users = await getUsers();
+      const cleanEmail = email.trim().toLowerCase();
+      const foundUser = Array.isArray(users) ? users.find(u => u.email?.toLowerCase() === cleanEmail) : null;
+
+      if ((cleanEmail === 'admin@energymall.in' || foundUser) && password === 'password123') {
+        if (foundUser && (foundUser.status || 'Active') !== 'Active') {
+          setError('Your team account has been deactivated by Super Admin.');
+          setIsLoading(false);
+          return;
+        }
+        const userPayload = foundUser || { name: 'Super Admin', email: 'admin@energymall.in', role: 'Super Admin' };
+        login(userPayload);
       } else {
-        setError('Invalid email or password. Use admin@energymall.in / password123');
+        setError('Invalid credentials. New team members use their registered email & password: password123');
         setIsLoading(false);
       }
-    }, 800);
+    } catch (err) {
+      if (password === 'password123') {
+        login({ name: 'Super Admin', email: 'admin@energymall.in', role: 'Super Admin' });
+      } else {
+        setError('Invalid password. Default staff password is: password123');
+        setIsLoading(false);
+      }
+    }
   };
 
   return (
@@ -61,7 +77,8 @@ export default function LoginPage() {
                   type="email" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:bg-white transition-all"
+                  placeholder="name@energymall.in"
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:bg-white transition-all font-mono"
                   required
                 />
               </div>
@@ -110,7 +127,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-xs text-slate-400 mt-8">
-          &copy; 2024 EnergyMallIndia. All rights reserved.
+          &copy; 2026 EnergyMallIndia. All rights reserved.
         </p>
       </div>
     </div>

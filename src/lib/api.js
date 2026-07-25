@@ -23,10 +23,14 @@ async function apiRequest(endpoint, options = {}) {
 
 // Overview KPI Analytics
 export async function getDashboardStats() {
+  const data = await apiRequest('/analytics');
+  if (data) return data;
   return await apiRequest('/analytics/overview');
 }
 
 export async function getAnalyticsOverview() {
+  const data = await apiRequest('/analytics');
+  if (data) return data;
   return await apiRequest('/analytics/overview');
 }
 
@@ -198,6 +202,31 @@ export async function updateContentPage(id, data) {
 
 export async function deleteContentPage(id) {
   return await apiRequest(`/content/${id}`, {
+    method: 'DELETE',
+  });
+}
+
+// Users & Team API
+export async function getUsers() {
+  return await apiRequest('/users');
+}
+
+export async function createUser(data) {
+  return await apiRequest('/users', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateUser(id, data) {
+  return await apiRequest(`/users/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteUser(id) {
+  return await apiRequest(`/users/${id}`, {
     method: 'DELETE',
   });
 }

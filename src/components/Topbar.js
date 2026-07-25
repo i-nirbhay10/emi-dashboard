@@ -1,14 +1,26 @@
 "use client";
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 export default function Topbar({ onMenuClick }) {
-  const router = useRouter();
   const [showDropdown, setShowDropdown] = useState(false);
+  const { user, logout } = useAuth();
+
+  const userInfo = {
+    name: user?.name || 'Super Admin',
+    email: user?.email || 'admin@energymall.in',
+    role: user?.role || 'Super Admin'
+  };
 
   const handleLogout = () => {
-    localStorage.removeItem('emi_admin_auth');
-    router.push('/login');
+    logout();
+  };
+
+  const getRoleBadgeStyle = (role) => {
+    if (role === 'Super Admin' || role === 'Admin') return 'bg-amber-50 text-amber-700 border-amber-200';
+    if (role === 'Store Manager') return 'bg-purple-50 text-purple-700 border-purple-200';
+    if (role === 'Support Agent') return 'bg-blue-50 text-blue-700 border-blue-200';
+    return 'bg-emerald-50 text-emerald-700 border-emerald-200';
   };
 
   return (
@@ -36,28 +48,36 @@ export default function Topbar({ onMenuClick }) {
             className="flex items-center gap-3 cursor-pointer group"
             onClick={() => setShowDropdown(!showDropdown)}
           >
-            <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-sm font-bold text-green-700 group-hover:ring-2 ring-green-500 ring-offset-2 transition-all">
-              AD
+            <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-xs font-bold text-green-700 group-hover:ring-2 ring-green-500 ring-offset-2 transition-all">
+              {userInfo.name ? userInfo.name[0].toUpperCase() : 'A'}
             </div>
             <div className="hidden md:block">
-              <p className="text-sm font-medium text-slate-700">Admin User</p>
-              <p className="text-xs text-slate-500">admin@energymall.in</p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-semibold text-slate-800">{userInfo.name}</p>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded border font-semibold ${getRoleBadgeStyle(userInfo.role)}`}>
+                  {userInfo.role}
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 font-mono">{userInfo.email}</p>
             </div>
             <svg className={`w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-transform ${showDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
           </div>
 
           {showDropdown && (
-            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-100 py-1 z-50">
-              <div className="px-4 py-2 border-b border-slate-100 md:hidden">
-                <p className="text-sm font-medium text-slate-700">Admin User</p>
-                <p className="text-xs text-slate-500 truncate">admin@energymall.in</p>
+            <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-slate-100 py-1 z-50">
+              <div className="px-4 py-2.5 border-b border-slate-100">
+                <p className="text-sm font-bold text-slate-900">{userInfo.name}</p>
+                <p className="text-xs text-slate-500 font-mono truncate">{userInfo.email}</p>
+                <span className={`inline-block mt-1 text-[10px] px-2 py-0.5 rounded border font-semibold ${getRoleBadgeStyle(userInfo.role)}`}>
+                  {userInfo.role}
+                </span>
               </div>
               <button 
                 onClick={handleLogout}
-                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
+                className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors font-medium"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                Logout
+                Sign Out
               </button>
             </div>
           )}

@@ -1,19 +1,20 @@
 "use client";
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
+import { AuthProvider, useAuth } from '../context/AuthContext';
 
-export default function DashboardLayout({ children }) {
+function InnerDashboardLayout({ children }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const { isAuthenticated, loading, syncAuthFromStorage } = useAuth();
   
   const [mounted, setMounted] = useState(false);
   const [isLogin, setIsLogin] = useState(false);
 
   useEffect(() => {
-    // Client-side only evaluation completely bypasses SSR hydration mismatches
     const checkLogin = window.location.pathname.startsWith('/login');
     setIsLogin(checkLogin);
     setMounted(true);
@@ -21,7 +22,9 @@ export default function DashboardLayout({ children }) {
     if (!checkLogin) {
       const auth = localStorage.getItem('emi_admin_auth');
       if (auth !== 'true') {
-        router.push('/login');
+        router.replace('/login');
+      } else {
+        syncAuthFromStorage();
       }
     }
   }, [pathname, router]);
@@ -54,5 +57,13 @@ export default function DashboardLayout({ children }) {
         </main>
       </div>
     </div>
+  );
+}
+
+export default function DashboardLayout({ children }) {
+  return (
+    <AuthProvider>
+      <InnerDashboardLayout>{children}</InnerDashboardLayout>
+    </AuthProvider>
   );
 }
