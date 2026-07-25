@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from 'react';
-import { getUsers } from '../../lib/api';
+import { getUsers, changeUserPassword } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 
 export default function LoginPage() {
@@ -9,6 +9,13 @@ export default function LoginPage() {
   const [password, setPassword] = useState('password123');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // First Login Password Change Modal State
+  const [mustChangeModal, setMustChangeModal] = useState(false);
+  const [pendingUser, setPendingUser] = useState(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passError, setPassError] = useState('');
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -20,16 +27,30 @@ export default function LoginPage() {
       const cleanEmail = email.trim().toLowerCase();
       const foundUser = Array.isArray(users) ? users.find(u => u.email?.toLowerCase() === cleanEmail) : null;
 
-      if ((cleanEmail === 'admin@energymall.in' || foundUser) && password === 'password123') {
+      // Check password match (user password or default password123)
+      const expectedPass = foundUser?.password || 'password123';
+      const isPassValid = password === expectedPass || password === 'password123';
+
+      if ((cleanEmail === 'admin@energymall.in' || foundUser) && isPassValid) {
         if (foundUser && (foundUser.status || 'Active') !== 'Active') {
           setError('Your team account has been deactivated by Super Admin.');
           setIsLoading(false);
           return;
         }
+
         const userPayload = foundUser || { name: 'Super Admin', email: 'admin@energymall.in', role: 'Super Admin' };
+
+        // Requirement 1: Force password change on first login if must_change_password is true
+        if (foundUser?.must_change_password) {
+          setPendingUser(userPayload);
+          setMustChangeModal(true);
+          setIsLoading(false);
+          return;
+        }
+
         login(userPayload);
       } else {
-        setError('Invalid credentials. New team members use their registered email & password: password123');
+        setError('Invalid credentials. New team members use their registered email & initial password.');
         setIsLoading(false);
       }
     } catch (err) {
@@ -39,6 +60,40 @@ export default function LoginPage() {
         setError('Invalid password. Default staff password is: password123');
         setIsLoading(false);
       }
+    }
+  };
+
+  const handleFirstPasswordSubmit = async (e) => {
+    e.preventDefault();
+    setPassError('');
+
+    if (!newPassword || newPassword.length < 6) {
+      setPassError('Password must be at least 6 characters.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPassError('Passwords do not match.');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      await changeUserPassword({
+        userId: pendingUser.id,
+        email: pendingUser.email,
+        newPassword
+      });
+
+      const updatedPayload = {
+        ...pendingUser,
+        must_change_password: false
+      };
+
+      setMustChangeModal(false);
+      login(updatedPayload);
+    } catch (err) {
+      setPassError(err.message || 'Failed to update password.');
+      setIsLoading(false);
     }
   };
 
@@ -125,6 +180,65 @@ export default function LoginPage() {
             </button>
           </form>
         </div>
+
+        {/* Mandatory First-Login Password Change Modal */}
+        {mustChangeModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
+            <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md p-6 space-y-4">
+              <div className="text-center">
+                <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto text-xl mb-2">
+                  🔒
+                </div>
+                <h2 className="text-lg font-bold text-slate-900">Change Temporary Password</h2>
+                <p className="text-xs text-slate-500 mt-1">
+                  Super Admin requires you to update your password on first login for security.
+                </p>
+              </div>
+
+              <form onSubmit={handleFirstPasswordSubmit} className="space-y-4">
+                {passError && (
+                  <div className="p-3 bg-red-50 text-red-600 text-xs font-medium rounded-lg border border-red-100">
+                    {passError}
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">New Password</label>
+                  <input 
+                    type="password"
+                    required
+                    minLength={6}
+                    placeholder="At least 6 characters"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Confirm New Password</label>
+                  <input 
+                    type="password"
+                    required
+                    minLength={6}
+                    placeholder="Re-enter new password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
+                  />
+                </div>
+
+                <button 
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-bold shadow-md transition-all flex justify-center items-center"
+                >
+                  {isLoading ? 'Updating...' : 'Set Password & Access Dashboard'}
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
 
         <p className="text-center text-xs text-slate-400 mt-8">
           &copy; 2026 EnergyMallIndia. All rights reserved.

@@ -66,7 +66,7 @@ export function AuthProvider({ children }) {
       window.dispatchEvent(new Event('emi-auth-change'));
 
       // 3. Immediately transition to dashboard with fresh route mount
-      window.location.href = '/';
+      window.location.replace('/');
     } catch (e) {
       console.error('Login error', e);
     }
@@ -85,10 +85,11 @@ export function AuthProvider({ children }) {
       // 2. Broadcast auth change event
       window.dispatchEvent(new Event('emi-auth-change'));
 
-      // 3. Transition to login page cleanly
-      window.location.href = '/login';
+      // 3. Instantly navigate to login page without waiting for re-render
+      window.location.replace('/login');
     } catch (e) {
       console.error('Logout error', e);
+      window.location.replace('/login');
     }
   };
 

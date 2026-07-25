@@ -21,7 +21,7 @@ export default function Home() {
 
   const kpis = data?.kpis || [];
   const recentOrders = data?.recentOrders || [];
-  const lowStockItems = data?.recentProducts ? data.recentProducts.filter(p => p.stock <= 15) : [];
+  const lowStockItems = data?.lowStockProducts || (data?.recentProducts ? data.recentProducts.filter(p => p.stock <= 15) : []);
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -53,7 +53,7 @@ export default function Home() {
               <h3 className="text-slate-500 text-sm font-medium">{kpi.title}</h3>
               <div className="mt-2 flex items-baseline gap-2">
                 <span className="text-2xl font-bold text-slate-900">{kpi.value}</span>
-                <span className={`text-xs font-semibold px-2 py-1 rounded-full ${kpi.up ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                <span className={`text-xs font-semibold px-2 py-1 rounded-full ${kpi.up ? 'bg-green-100 text-green-700' : 'bg-rose-100 text-rose-700'}`}>
                   {kpi.change}
                 </span>
               </div>
@@ -159,25 +159,31 @@ export default function Home() {
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
           <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
             <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span>
               Low Stock Alerts
             </h2>
+            <span className="text-xs font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+              {lowStockItems.length} Warnings
+            </span>
           </div>
-          <div className="p-6 space-y-5 flex-1">
+          <div className="p-6 space-y-4 flex-1 overflow-y-auto max-h-80">
             {loading ? (
-              <div className="text-center text-slate-400 text-sm py-4">Checking stock...</div>
+              <div className="text-center text-slate-400 text-sm py-4">Checking inventory stock...</div>
             ) : lowStockItems.length > 0 ? (
               lowStockItems.map((item, i) => (
-                <div key={i} className="flex justify-between items-start pb-5 border-b border-slate-100 last:border-0 last:pb-0">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900 leading-tight">{item.name}</p>
-                    <p className="text-xs text-slate-500 font-mono mt-1">{item.sku}</p>
+                <div key={i} className="flex justify-between items-center pb-4 border-b border-slate-100 last:border-0 last:pb-0">
+                  <div className="min-w-0 pr-2">
+                    <p className="text-xs font-bold text-slate-900 leading-tight truncate">{item.name}</p>
+                    <p className="text-[11px] text-slate-400 font-mono mt-0.5">{item.sku || 'SKU-GENERAL'}</p>
                   </div>
-                  <div className="text-right">
-                    <p className={`text-sm font-bold ${item.stock === 0 ? 'text-red-600' : 'text-amber-600'}`}>
-                      {item.stock} units left
-                    </p>
-                    <p className="text-xs text-slate-400 mt-1">{item.stock === 0 ? 'Out of Stock' : 'Low Stock'}</p>
+                  <div className="text-right shrink-0">
+                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-extrabold border ${
+                      item.stock === 0 
+                        ? 'bg-rose-100 text-rose-700 border-rose-200' 
+                        : 'bg-amber-50 text-amber-700 border-amber-200'
+                    }`}>
+                      {item.stock === 0 ? 'Out of Stock' : `${item.stock} left`}
+                    </span>
                   </div>
                 </div>
               ))
@@ -186,7 +192,9 @@ export default function Home() {
             )}
           </div>
           <div className="p-4 border-t border-slate-100 bg-slate-50/50 text-center">
-            <Link href="/inventory" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">Manage Inventory &rarr;</Link>
+            <Link href="/inventory" className="text-sm font-semibold text-green-700 hover:text-green-800 transition-colors">
+              Manage Inventory & Restock &rarr;
+            </Link>
           </div>
         </div>
       </div>

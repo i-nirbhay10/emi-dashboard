@@ -9,7 +9,7 @@ function InnerDashboardLayout({ children }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
-  const { isAuthenticated, loading, syncAuthFromStorage } = useAuth();
+  const { isAuthenticated, user, loading, syncAuthFromStorage } = useAuth();
   
   const [mounted, setMounted] = useState(false);
   const [isLogin, setIsLogin] = useState(false);
@@ -29,8 +29,19 @@ function InnerDashboardLayout({ children }) {
     }
   }, [pathname, router]);
 
+  // Prevent flash of superadmin interface when unauthenticated or during logout
+  const isUnauthenticated = !isLogin && (!isAuthenticated || !user || typeof window !== 'undefined' && localStorage.getItem('emi_admin_auth') !== 'true');
+
+  if (isUnauthenticated && mounted) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="w-8 h-8 border-3 border-green-600 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
   return (
-    <div className={`min-h-full flex text-slate-900 bg-slate-50 transition-opacity duration-300 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+    <div className={`min-h-full flex text-slate-900 bg-slate-50 transition-opacity duration-200 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
       
       {/* Mobile Sidebar Overlay */}
       {isMobileMenuOpen && (

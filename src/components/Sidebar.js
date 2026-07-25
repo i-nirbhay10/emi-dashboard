@@ -3,11 +3,17 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
+import { hasPermission } from '../lib/rbac';
 
 export default function Sidebar({ onNavigate }) {
   const pathname = usePathname();
   const { user } = useAuth();
-  const userRole = user?.role || 'Super Admin';
+  
+  if (!user || !user.role) {
+    return null;
+  }
+
+  const userRole = user.role;
 
   const isActive = (path) => {
     if (path === '/' && pathname !== '/') return false;
@@ -25,23 +31,10 @@ export default function Sidebar({ onNavigate }) {
     return isActive(path) ? "w-5 h-5 text-green-600" : "w-5 h-5 text-slate-400 group-hover:text-slate-600 transition-colors";
   };
 
-  // Role Access Rules
+  // Dynamic RBAC Permission Check for Navigation Links
   const canAccess = (key) => {
-    if (userRole === 'Super Admin' || userRole === 'Admin') return true;
-
-    if (userRole === 'Store Manager') {
-      return ['dashboard', 'orders', 'products', 'categories', 'inventory', 'customers'].includes(key);
-    }
-
-    if (userRole === 'Support Agent') {
-      return ['dashboard', 'orders', 'customers'].includes(key);
-    }
-
-    if (userRole === 'Marketing Specialist') {
-      return ['dashboard', 'analytics', 'customers', 'offers', 'banners', 'content'].includes(key);
-    }
-
-    return true;
+    if (userRole === 'Super Admin' || user?.email === 'admin@energymall.in') return true;
+    return hasPermission(user, key, 'view');
   };
 
   return (
@@ -165,16 +158,20 @@ export default function Sidebar({ onNavigate }) {
       </nav>
 
       {/* Footer / Settings */}
-      {userRole === 'Super Admin' && (
+      {(canAccess('security') || canAccess('settings')) && (
         <div className="p-4 border-t border-slate-100 space-y-1 shrink-0">
-          <Link href="/security" onClick={onNavigate} className={`${navItemClass('/security')} group`}>
-            <svg className={iconClass('/security')} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
-            Security
-          </Link>
-          <Link href="/settings" onClick={onNavigate} className={`${navItemClass('/settings')} group`}>
-            <svg className={iconClass('/settings')} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-            Settings
-          </Link>
+          {canAccess('security') && (
+            <Link href="/security" onClick={onNavigate} className={`${navItemClass('/security')} group`}>
+              <svg className={iconClass('/security')} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+              Security
+            </Link>
+          )}
+          {canAccess('settings') && (
+            <Link href="/settings" onClick={onNavigate} className={`${navItemClass('/settings')} group`}>
+              <svg className={iconClass('/settings')} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+              Settings
+            </Link>
+          )}
         </div>
       )}
     </div>

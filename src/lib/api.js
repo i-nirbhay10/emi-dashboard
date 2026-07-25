@@ -2,9 +2,17 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002/api/v
 
 async function apiRequest(endpoint, options = {}) {
   try {
+    let authUser = null;
+    try {
+      const stored = typeof window !== 'undefined' ? localStorage.getItem('emi_admin_user') : null;
+      if (stored) authUser = JSON.parse(stored);
+    } catch(e){}
+
     const res = await fetch(`${API_BASE}${endpoint}`, {
       headers: {
         'Content-Type': 'application/json',
+        'x-user-role': authUser?.role || 'Super Admin',
+        'x-user-email': authUser?.email || 'admin@energymall.in',
         ...options.headers,
       },
       ...options,
@@ -89,14 +97,16 @@ export async function deleteCategory(id) {
 }
 
 // Orders API
-export async function getOrders() {
-  return await apiRequest('/orders');
+export async function getOrders(status) {
+  const query = status && status !== 'All' ? `?status=${encodeURIComponent(status)}` : '';
+  return await apiRequest(`/orders${query}`);
 }
 
-export async function updateOrderStatus(id, status) {
+export async function updateOrderStatus(id, status, payment_status) {
+  const body = typeof status === 'object' ? status : { status, payment_status };
   return await apiRequest(`/orders/${id}`, {
     method: 'PUT',
-    body: JSON.stringify({ status }),
+    body: JSON.stringify(body),
   });
 }
 
@@ -181,7 +191,7 @@ export async function deleteBanner(id) {
   });
 }
 
-// Content CMS API
+// Content Pages API
 export async function getContentPages() {
   return await apiRequest('/content');
 }
@@ -206,27 +216,59 @@ export async function deleteContentPage(id) {
   });
 }
 
-// Users & Team API
+// Dynamic Roles API
+export async function getRoles() {
+  return await apiRequest('/roles');
+}
+
+export async function createRole(roleData) {
+  return await apiRequest('/roles', {
+    method: 'POST',
+    body: JSON.stringify(roleData)
+  });
+}
+
+export async function updateRole(roleId, roleData) {
+  return await apiRequest(`/roles/${roleId}`, {
+    method: 'PUT',
+    body: JSON.stringify(roleData)
+  });
+}
+
+export async function deleteRole(roleId) {
+  return await apiRequest(`/roles/${roleId}`, {
+    method: 'DELETE'
+  });
+}
+
+// Users Management API
 export async function getUsers() {
   return await apiRequest('/users');
 }
 
-export async function createUser(data) {
+export async function createUser(userData) {
   return await apiRequest('/users', {
     method: 'POST',
-    body: JSON.stringify(data),
+    body: JSON.stringify(userData)
   });
 }
 
-export async function updateUser(id, data) {
-  return await apiRequest(`/users/${id}`, {
+export async function updateUser(userId, userData) {
+  return await apiRequest(`/users/${userId}`, {
     method: 'PUT',
-    body: JSON.stringify(data),
+    body: JSON.stringify(userData)
   });
 }
 
-export async function deleteUser(id) {
-  return await apiRequest(`/users/${id}`, {
-    method: 'DELETE',
+export async function deleteUser(userId) {
+  return await apiRequest(`/users/${userId}`, {
+    method: 'DELETE'
+  });
+}
+
+export async function changeUserPassword(payload) {
+  return await apiRequest('/users/change-password', {
+    method: 'POST',
+    body: JSON.stringify(payload)
   });
 }
