@@ -294,8 +294,12 @@ export default function CustomersPage() {
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-3.5">
-                          <div className="h-10 w-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-sm font-bold text-slate-700 shadow-xs">
-                            {initials}
+                          <div className="h-10 w-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-sm font-bold text-slate-700 shadow-xs overflow-hidden">
+                            {customer.avatar_url ? (
+                              <img src={customer.avatar_url} alt={customer.name} className="w-full h-full object-cover" />
+                            ) : (
+                              initials
+                            )}
                           </div>
                           <div>
                             <div className="font-semibold text-slate-900 hover:text-green-600 transition-colors flex items-center gap-1.5">

@@ -29,6 +29,37 @@ async function apiRequest(endpoint, options = {}) {
   }
 }
 
+// Media Upload API (Supabase Storage)
+export async function uploadMediaFile(file, bucket = 'products') {
+  try {
+    let authUser = null;
+    try {
+      const stored = typeof window !== 'undefined' ? localStorage.getItem('emi_admin_user') : null;
+      if (stored) authUser = JSON.parse(stored);
+    } catch(e){}
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('bucket', bucket);
+
+    const res = await fetch(`${API_BASE}/upload`, {
+      method: 'POST',
+      headers: {
+        'x-user-role': authUser?.role || 'Super Admin',
+        'x-user-email': authUser?.email || 'admin@energymall.in',
+      },
+      body: formData,
+    });
+
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.data?.url || null;
+  } catch (error) {
+    console.error('Media upload error:', error);
+    return null;
+  }
+}
+
 // Overview KPI Analytics
 export async function getDashboardStats() {
   const data = await apiRequest('/analytics');

@@ -1,10 +1,11 @@
 "use client";
 import React, { useEffect, useState } from 'react';
-import { getBanners, createBanner, updateBanner, deleteBanner } from '../../lib/api';
+import { getBanners, createBanner, updateBanner, deleteBanner, uploadMediaFile } from '../../lib/api';
 
 export default function BannersPage() {
   const [banners, setBanners] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
   const [search, setSearch] = useState('');
   const [placementFilter, setPlacementFilter] = useState('All');
 
@@ -34,6 +35,17 @@ export default function BannersPage() {
   useEffect(() => {
     loadBanners();
   }, []);
+
+  const handleImageFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    const uploadedUrl = await uploadMediaFile(file, 'banners');
+    if (uploadedUrl) {
+      setFormBanner(prev => ({ ...prev, image_url: uploadedUrl }));
+    }
+    setUploading(false);
+  };
 
   const handleCreateSubmit = async (e) => {
     e.preventDefault();
@@ -137,7 +149,7 @@ export default function BannersPage() {
               {totalBannersCount} Total Banners
             </span>
           </h1>
-          <p className="text-sm text-slate-500 mt-1">Configure mobile storefront slider banners, category heroes, and promotional placement banners.</p>
+          <p className="text-sm text-slate-500 mt-1">Configure mobile storefront slider banners, category heroes, and promotional placement banners with Supabase Storage CDN integration.</p>
         </div>
         <div className="flex items-center gap-3">
           <button
@@ -293,6 +305,12 @@ export default function BannersPage() {
                     {banner.subtitle && <p className="text-sm text-slate-600 mt-1">{banner.subtitle}</p>}
                   </div>
 
+                  {banner.image_url && (
+                    <div className="rounded-lg overflow-hidden border border-slate-200 max-h-36 bg-slate-50">
+                      <img src={banner.image_url} alt={banner.title} className="w-full h-36 object-cover" />
+                    </div>
+                  )}
+
                   {banner.link && (
                     <div className="text-xs text-blue-600 font-mono flex items-center gap-1">
                       <span>🔗 Target Redirect:</span>
@@ -334,7 +352,7 @@ export default function BannersPage() {
       {/* Add Banner Modal */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-md p-6 space-y-4">
+          <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-md p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <h2 className="text-lg font-bold text-slate-900">Add New Banner</h2>
             <form onSubmit={handleCreateSubmit} className="space-y-3">
               <div>
@@ -348,6 +366,7 @@ export default function BannersPage() {
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
                 />
               </div>
+
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1">Subtitle / Tagline</label>
                 <input 
@@ -358,6 +377,25 @@ export default function BannersPage() {
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
                 />
               </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">
+                  Upload Graphic <span className="text-green-600 font-bold">(Supabase CDN)</span>
+                </label>
+                <input 
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageFileChange}
+                  className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs bg-slate-50 text-slate-600 file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                />
+                {uploading && <p className="text-[11px] text-green-600 mt-1 font-semibold animate-pulse">Uploading graphic to Supabase Storage bucket...</p>}
+                {formBanner.image_url && (
+                  <div className="mt-2 text-[11px] text-slate-500 font-mono truncate">
+                    Uploaded CDN: {formBanner.image_url}
+                  </div>
+                )}
+              </div>
+
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1">Placement</label>
                 <select 
@@ -371,6 +409,7 @@ export default function BannersPage() {
                   <option value="Checkout Slider">Checkout Slider</option>
                 </select>
               </div>
+
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1">Target Route Link</label>
                 <input 
@@ -381,6 +420,7 @@ export default function BannersPage() {
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:outline-none font-mono"
                 />
               </div>
+
               <div className="flex justify-end gap-3 pt-2">
                 <button 
                   type="button"
@@ -391,7 +431,8 @@ export default function BannersPage() {
                 </button>
                 <button 
                   type="submit"
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 shadow-sm"
+                  disabled={uploading}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 shadow-sm disabled:opacity-50"
                 >
                   Save Banner
                 </button>
@@ -404,7 +445,7 @@ export default function BannersPage() {
       {/* Edit Banner Modal */}
       {isEditModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-md p-6 space-y-4">
+          <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-md p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <h2 className="text-lg font-bold text-slate-900">Edit Banner</h2>
             <form onSubmit={handleEditSubmit} className="space-y-3">
               <div>
@@ -417,6 +458,7 @@ export default function BannersPage() {
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
                 />
               </div>
+
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1">Subtitle / Tagline</label>
                 <input 
@@ -426,6 +468,25 @@ export default function BannersPage() {
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
                 />
               </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">
+                  Upload Graphic <span className="text-green-600 font-bold">(Supabase CDN)</span>
+                </label>
+                <input 
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageFileChange}
+                  className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs bg-slate-50 text-slate-600 file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                />
+                {uploading && <p className="text-[11px] text-green-600 mt-1 font-semibold animate-pulse">Uploading graphic to Supabase Storage bucket...</p>}
+                {formBanner.image_url && (
+                  <div className="mt-2 text-[11px] text-slate-500 font-mono truncate">
+                    Uploaded CDN: {formBanner.image_url}
+                  </div>
+                )}
+              </div>
+
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1">Placement</label>
                 <select 
@@ -439,6 +500,7 @@ export default function BannersPage() {
                   <option value="Checkout Slider">Checkout Slider</option>
                 </select>
               </div>
+
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1">Status</label>
                 <select 
@@ -450,6 +512,7 @@ export default function BannersPage() {
                   <option value="Inactive">Inactive</option>
                 </select>
               </div>
+
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1">Target Route Link</label>
                 <input 
@@ -459,6 +522,7 @@ export default function BannersPage() {
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:outline-none font-mono"
                 />
               </div>
+
               <div className="flex justify-end gap-3 pt-2">
                 <button 
                   type="button"
@@ -469,7 +533,8 @@ export default function BannersPage() {
                 </button>
                 <button 
                   type="submit"
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 shadow-sm"
+                  disabled={uploading}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 shadow-sm disabled:opacity-50"
                 >
                   Update Banner
                 </button>
