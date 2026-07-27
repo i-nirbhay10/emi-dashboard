@@ -92,3 +92,25 @@ export function hasPermission(user, moduleName, actionName = 'view') {
 
   return modulePerms.includes(actionName) || modulePerms.includes('manage');
 }
+
+export function getModuleForPath(pathname) {
+  if (!pathname || pathname === '/' || pathname === '') return 'dashboard';
+
+  const path = pathname.split('?')[0].toLowerCase();
+
+  if (path === '/' || path === '') return 'dashboard';
+  if (path.startsWith('/analytics')) return 'analytics';
+  if (path.startsWith('/orders')) return 'orders';
+  if (path.startsWith('/products')) return 'products';
+  if (path.startsWith('/categories')) return 'categories';
+  if (path.startsWith('/inventory')) return 'inventory';
+  if (path.startsWith('/customers')) return 'customers';
+  if (path.startsWith('/offers')) return 'offers';
+  if (path.startsWith('/banners')) return 'banners';
+  if (path.startsWith('/content')) return 'content';
+  if (path.startsWith('/users')) return 'users';
+  if (path.startsWith('/security')) return 'security';
+  if (path.startsWith('/settings')) return 'settings';
+
+  return null;
+}
