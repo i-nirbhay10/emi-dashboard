@@ -81,14 +81,20 @@ export default function Sidebar({ onNavigate }) {
           </>
         )}
 
-        {/* E-Commerce Group */}
-        {(canAccess('orders') || canAccess('products') || canAccess('categories') || canAccess('inventory')) && (
+        {/* E-Commerce & Logistics Group */}
+        {(canAccess('orders') || canAccess('logistics') || canAccess('products') || canAccess('categories') || canAccess('inventory')) && (
           <>
-            <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-6 px-2">E-Commerce</div>
+            <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-6 px-2">E-Commerce & Logistics</div>
             {canAccess('orders') && (
               <Link href="/orders" onClick={onNavigate} className={`${navItemClass('/orders')} group`}>
                 <svg className={iconClass('/orders')} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
                 Orders
+              </Link>
+            )}
+            {canAccess('logistics') && (
+              <Link href="/logistics" onClick={onNavigate} className={`${navItemClass('/logistics')} group`}>
+                <svg className={iconClass('/logistics')} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                Logistics & Hubs
               </Link>
             )}
             {canAccess('products') && (

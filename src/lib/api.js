@@ -21,8 +21,9 @@ async function apiRequest(endpoint, options = {}) {
       console.warn(`API HTTP error! status: ${res.status} for ${endpoint}`);
       return null;
     }
-    const json = await res.json();
-    return json.data || json;
+    const json = await res.json().catch(() => null);
+    if (!json) return null;
+    return json.data !== undefined ? json.data : json;
   } catch (error) {
     console.error(`API Fetch Error (${endpoint}):`, error);
     return null;
@@ -52,12 +53,56 @@ export async function uploadMediaFile(file, bucket = 'products') {
     });
 
     if (!res.ok) return null;
-    const json = await res.json();
-    return json.data?.url || null;
+    const json = await res.json().catch(() => null);
+    return json?.data?.url || null;
   } catch (error) {
     console.error('Media upload error:', error);
     return null;
   }
+}
+
+// Dynamic Logistics Hubs & PIN Codes API
+export async function getLogisticsHubs() {
+  const data = await apiRequest('/logistics/hubs');
+  return Array.isArray(data) ? data : [];
+}
+
+export async function createLogisticsHub(data) {
+  return await apiRequest('/logistics/hubs', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateLogisticsHub(id, data) {
+  return await apiRequest(`/logistics/hubs/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteLogisticsHub(id) {
+  return await apiRequest(`/logistics/hubs/${id}`, {
+    method: 'DELETE',
+  });
+}
+
+export async function getServiceablePincodes() {
+  const data = await apiRequest('/logistics/pincodes');
+  return Array.isArray(data) ? data : [];
+}
+
+export async function saveServiceablePincode(data) {
+  return await apiRequest('/logistics/pincodes', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteServiceablePincode(id) {
+  return await apiRequest(`/logistics/pincodes/${id}`, {
+    method: 'DELETE',
+  });
 }
 
 // Overview KPI Analytics
@@ -75,7 +120,8 @@ export async function getAnalyticsOverview() {
 
 // Products API
 export async function getProducts() {
-  return await apiRequest('/products');
+  const data = await apiRequest('/products');
+  return Array.isArray(data) ? data : [];
 }
 
 export async function getProductById(id) {
@@ -104,7 +150,8 @@ export async function deleteProduct(id) {
 
 // Categories API
 export async function getCategories() {
-  return await apiRequest('/categories');
+  const data = await apiRequest('/categories');
+  return Array.isArray(data) ? data : [];
 }
 
 export async function createCategory(data) {
@@ -130,7 +177,8 @@ export async function deleteCategory(id) {
 // Orders API
 export async function getOrders(status) {
   const query = status && status !== 'All' ? `?status=${encodeURIComponent(status)}` : '';
-  return await apiRequest(`/orders${query}`);
+  const data = await apiRequest(`/orders${query}`);
+  return Array.isArray(data) ? data : [];
 }
 
 export async function updateOrderStatus(id, status, payment_status) {
@@ -149,7 +197,8 @@ export async function deleteOrder(id) {
 
 // Customers API
 export async function getCustomers() {
-  return await apiRequest('/customers');
+  const data = await apiRequest('/customers');
+  return Array.isArray(data) ? data : [];
 }
 
 export async function createCustomer(data) {
@@ -174,7 +223,8 @@ export async function deleteCustomer(id) {
 
 // Offers API
 export async function getOffers() {
-  return await apiRequest('/offers');
+  const data = await apiRequest('/offers');
+  return Array.isArray(data) ? data : [];
 }
 
 export async function createOffer(data) {
@@ -199,7 +249,8 @@ export async function deleteOffer(id) {
 
 // Banners API
 export async function getBanners() {
-  return await apiRequest('/banners');
+  const data = await apiRequest('/banners');
+  return Array.isArray(data) ? data : [];
 }
 
 export async function createBanner(data) {
@@ -224,7 +275,8 @@ export async function deleteBanner(id) {
 
 // Content Pages API
 export async function getContentPages() {
-  return await apiRequest('/content');
+  const data = await apiRequest('/content');
+  return Array.isArray(data) ? data : [];
 }
 
 export async function createContentPage(data) {
@@ -249,7 +301,8 @@ export async function deleteContentPage(id) {
 
 // Dynamic Roles API
 export async function getRoles() {
-  return await apiRequest('/roles');
+  const data = await apiRequest('/roles');
+  return Array.isArray(data) ? data : [];
 }
 
 export async function createRole(roleData) {
@@ -274,7 +327,8 @@ export async function deleteRole(roleId) {
 
 // Users Management API
 export async function getUsers() {
-  return await apiRequest('/users');
+  const data = await apiRequest('/users');
+  return Array.isArray(data) ? data : [];
 }
 
 export async function createUser(userData) {

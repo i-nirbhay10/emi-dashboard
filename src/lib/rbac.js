@@ -5,6 +5,7 @@
 export const MODULES = [
   'dashboard',
   'analytics',
+  'logistics',
   'orders',
   'products',
   'categories',
@@ -36,6 +37,7 @@ export const ROLE_DEFAULT_PERMISSIONS = {
   'Admin': {
     'dashboard': ['view', 'create', 'edit', 'delete', 'approve', 'export', 'import', 'manage'],
     'analytics': ['view', 'create', 'edit', 'delete', 'approve', 'export', 'import', 'manage'],
+    'logistics': ['view', 'create', 'edit', 'delete', 'approve', 'export', 'import', 'manage'],
     'orders': ['view', 'create', 'edit', 'delete', 'approve', 'export', 'import', 'manage'],
     'products': ['view', 'create', 'edit', 'delete', 'approve', 'export', 'import', 'manage'],
     'categories': ['view', 'create', 'edit', 'delete', 'approve', 'export', 'import', 'manage'],
@@ -48,6 +50,7 @@ export const ROLE_DEFAULT_PERMISSIONS = {
   },
   'Store Manager': {
     'dashboard': ['view'],
+    'logistics': ['view', 'create', 'edit'],
     'orders': ['view', 'create', 'edit', 'approve', 'export'],
     'products': ['view', 'create', 'edit', 'export', 'import'],
     'categories': ['view', 'create', 'edit'],
@@ -56,6 +59,7 @@ export const ROLE_DEFAULT_PERMISSIONS = {
   },
   'Support Agent': {
     'dashboard': ['view'],
+    'logistics': ['view'],
     'orders': ['view', 'edit'],
     'customers': ['view', 'edit']
   },
@@ -100,6 +104,7 @@ export function getModuleForPath(pathname) {
 
   if (path === '/' || path === '') return 'dashboard';
   if (path.startsWith('/analytics')) return 'analytics';
+  if (path.startsWith('/logistics')) return 'logistics';
   if (path.startsWith('/orders')) return 'orders';
   if (path.startsWith('/products')) return 'products';
   if (path.startsWith('/categories')) return 'categories';

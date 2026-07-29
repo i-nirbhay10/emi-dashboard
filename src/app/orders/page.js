@@ -87,10 +87,10 @@ export default function OrdersPage() {
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
             Orders Management
             <span className="text-xs px-2.5 py-0.5 rounded-full bg-green-50 text-green-700 font-semibold border border-green-200">
-              Live Fulfillment
+              Live Fulfillment & Delivery Sync
             </span>
           </h1>
-          <p className="text-sm text-slate-500 mt-1">Track customer purchases, update order status flows, and review itemized invoice receipts.</p>
+          <p className="text-sm text-slate-500 mt-1">Track customer purchases, review shipping address deliverability tags, and manage fulfillment.</p>
         </div>
       </div>
 
@@ -302,6 +302,27 @@ export default function OrdersPage() {
                 </div>
               </div>
             </div>
+
+            {/* Shipping Address & Delivery Availability Status Tag */}
+            {selectedOrder.shipping_address && (
+              <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-slate-400 font-semibold uppercase tracking-wider text-[10px]">Shipping Address & Delivery Status</span>
+                  {selectedOrder.shipping_address.isDeliverable !== false ? (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                      <span>⚡</span> Deliverable Zone (PIN {selectedOrder.shipping_address.pincode})
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-50 text-rose-700 border border-rose-200 flex items-center gap-1">
+                      <span>⚠️</span> Unserviceable Zone (PIN {selectedOrder.shipping_address.pincode})
+                    </span>
+                  )}
+                </div>
+                <div className="font-semibold text-slate-800">
+                  {selectedOrder.shipping_address.house || ''} {selectedOrder.shipping_address.street || ''}, {selectedOrder.shipping_address.city || ''}, {selectedOrder.shipping_address.state || ''} - <span className="font-mono font-bold">{selectedOrder.shipping_address.pincode}</span>
+                </div>
+              </div>
+            )}
 
             {/* Itemized Purchased Products */}
             <div className="flex-1 overflow-y-auto space-y-2">
