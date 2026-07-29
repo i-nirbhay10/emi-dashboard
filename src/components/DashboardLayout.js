@@ -56,17 +56,19 @@ function InnerDashboardLayout({ children }) {
 
   useEffect(() => {
     const checkLogin = window.location.pathname.startsWith('/login');
-    setIsLogin(checkLogin);
-    setMounted(true);
-    
-    if (!checkLogin) {
-      const auth = localStorage.getItem('emi_admin_auth');
-      if (auth !== 'true') {
-        router.replace('/login');
-      } else {
-        syncAuthFromStorage();
+    Promise.resolve().then(() => {
+      setIsLogin(checkLogin);
+      setMounted(true);
+      
+      if (!checkLogin) {
+        const auth = localStorage.getItem('emi_admin_auth');
+        if (auth !== 'true') {
+          router.replace('/login');
+        } else {
+          syncAuthFromStorage();
+        }
       }
-    }
+    });
   }, [pathname, router]);
 
   // Determine target RBAC module for current route
@@ -89,7 +91,7 @@ function InnerDashboardLayout({ children }) {
   }
 
   return (
-    <div className={`min-h-full flex text-slate-900 bg-slate-50 transition-opacity duration-200 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+    <div className={`h-screen w-screen overflow-hidden flex text-slate-900 bg-slate-50 transition-opacity duration-200 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
       
       {/* Mobile Sidebar Overlay */}
       {isMobileMenuOpen && (
@@ -100,18 +102,18 @@ function InnerDashboardLayout({ children }) {
       )}
 
       {/* Sidebar Container */}
-      <div className={`fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 md:relative md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} ${isLogin ? 'hidden' : 'block'}`}>
+      <div className={`fixed inset-y-0 left-0 z-50 h-full transform transition-transform duration-300 md:relative md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} ${isLogin ? 'hidden' : 'block'} shrink-0`}>
         <Sidebar onNavigate={() => setIsMobileMenuOpen(false)} />
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden w-full min-w-0">
+      <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
         
         <div className={isLogin ? 'hidden' : 'block'}>
           <Topbar onMenuClick={() => setIsMobileMenuOpen(true)} />
         </div>
         
-        <main className={`flex-1 overflow-auto ${isLogin ? '' : 'p-4 md:p-8'}`}>
+        <main className={`flex-1 overflow-y-auto ${isLogin ? '' : 'p-4 md:p-8'}`}>
           {isAuthorized ? (
             children
           ) : (

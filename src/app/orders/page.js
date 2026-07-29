@@ -18,7 +18,6 @@ export default function OrdersPage() {
   const canDeleteOrders = user?.role === 'Super Admin' || hasPermission(user, 'orders', 'delete');
 
   const loadOrders = async () => {
-    setLoading(true);
     const data = await getOrders(activeTab);
     setOrders(data || []);
     setLoading(false);
@@ -163,7 +162,7 @@ export default function OrdersPage() {
                     </td>
 
                     <td className="px-6 py-4 whitespace-nowrap text-xs text-slate-500 font-medium">
-                      {new Date(order.created_at || Date.now()).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      {new Date(order.created_at || '1970-01-01T00:00:00.000Z').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </td>
 
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -250,7 +249,7 @@ export default function OrdersPage() {
                   {selectedOrder.order_number || selectedOrder.id}
                 </h2>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Placed on {new Date(selectedOrder.created_at || Date.now()).toLocaleString('en-IN')}
+                  Placed on {new Date(selectedOrder.created_at || '1970-01-01T00:00:00.000Z').toLocaleString('en-IN')}
                 </p>
               </div>
               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 font-bold text-sm">✕</button>

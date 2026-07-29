@@ -68,7 +68,6 @@ export default function UsersPage() {
   });
 
   const loadData = async () => {
-    setLoading(true);
     const [userData, roleData] = await Promise.all([getUsers(), getRoles()]);
     setUsers(userData || []);
     setRoles(roleData || []);
@@ -831,7 +830,7 @@ export default function UsersPage() {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1">
-                  Initial Password <span className="text-slate-400 font-normal">(Optional: Default 'password123')</span>
+                  Initial Password <span className="text-slate-400 font-normal">(Optional: Default &apos;password123&apos;)</span>
                 </label>
                 <input 
                   type="password" 

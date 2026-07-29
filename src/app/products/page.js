@@ -40,7 +40,6 @@ export default function ProductsPage() {
   const [editProduct, setEditProduct] = useState(null);
 
   const loadProducts = async () => {
-    setLoading(true);
     const data = await getProducts();
     const catData = await getCategories();
     setProducts(data || []);

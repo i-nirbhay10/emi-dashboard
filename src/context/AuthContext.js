@@ -36,7 +36,9 @@ export function AuthProvider({ children }) {
   };
 
   useEffect(() => {
-    syncAuthFromStorage();
+    Promise.resolve().then(() => {
+      syncAuthFromStorage();
+    });
 
     const handleAuthChange = () => {
       syncAuthFromStorage();

@@ -523,7 +523,7 @@ export default function CustomersPage() {
                       </div>
                     ) : (
                       <div className="p-8 text-center text-xs text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                        No items currently in customer's shopping cart.
+                        No items currently in customer&apos;s shopping cart.
                       </div>
                     )}
                   </div>
