@@ -388,6 +388,9 @@ export default function BannersPage() {
                   onChange={handleImageFileChange}
                   className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs bg-slate-50 text-slate-600 file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
                 />
+                <p className="text-[10px] text-slate-400 mt-1 leading-relaxed">
+                  📐 Recommended Specs — <strong>Hero</strong>: 800×400px (2:1) • <strong>Category</strong>: 800×200px (4:1) • <strong>Cart/Checkout</strong>: 600×150px (4:1). Max size 2MB.
+                </p>
                 {uploading && <p className="text-[11px] text-green-600 mt-1 font-semibold animate-pulse">Uploading graphic to Supabase Storage bucket...</p>}
                 {formBanner.image_url && (
                   <div className="mt-2 text-[11px] text-slate-500 font-mono truncate">
@@ -408,6 +411,9 @@ export default function BannersPage() {
                   <option value="Promotional Drawer">Promotional Drawer</option>
                   <option value="Checkout Slider">Checkout Slider</option>
                 </select>
+                <p className="text-[10px] text-slate-400 mt-1 leading-relaxed">
+                  💡 <strong>Homepage Hero</strong>: Home Screen Top. <strong>Category Banner</strong>: Categories List Header. <strong>Promotional Drawer</strong>: Cart Page. <strong>Checkout Slider</strong>: Checkout Order Summary.
+                </p>
               </div>
 
               <div>
@@ -479,6 +485,9 @@ export default function BannersPage() {
                   onChange={handleImageFileChange}
                   className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs bg-slate-50 text-slate-600 file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
                 />
+                <p className="text-[10px] text-slate-400 mt-1 leading-relaxed">
+                  📐 Recommended Specs — <strong>Hero</strong>: 800×400px (2:1) • <strong>Category</strong>: 800×200px (4:1) • <strong>Cart/Checkout</strong>: 600×150px (4:1). Max size 2MB.
+                </p>
                 {uploading && <p className="text-[11px] text-green-600 mt-1 font-semibold animate-pulse">Uploading graphic to Supabase Storage bucket...</p>}
                 {formBanner.image_url && (
                   <div className="mt-2 text-[11px] text-slate-500 font-mono truncate">
@@ -499,6 +508,9 @@ export default function BannersPage() {
                   <option value="Promotional Drawer">Promotional Drawer</option>
                   <option value="Checkout Slider">Checkout Slider</option>
                 </select>
+                <p className="text-[10px] text-slate-400 mt-1 leading-relaxed">
+                  💡 <strong>Homepage Hero</strong>: Home Screen Top. <strong>Category Banner</strong>: Categories List Header. <strong>Promotional Drawer</strong>: Cart Page. <strong>Checkout Slider</strong>: Checkout Order Summary.
+                </p>
               </div>
 
               <div>
