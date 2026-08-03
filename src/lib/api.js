@@ -357,3 +357,11 @@ export async function changeUserPassword(payload) {
     body: JSON.stringify(payload)
   });
 }
+
+// Payments API
+export async function getPayments(status) {
+  const query = status && status !== 'All' ? `?status=${encodeURIComponent(status)}` : '';
+  const data = await apiRequest(`/payments${query}`);
+  return Array.isArray(data) ? data : [];
+}
+
