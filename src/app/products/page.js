@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { getProducts, createProduct, updateProduct, deleteProduct, getCategories, uploadMediaFile } from '../../lib/api';
 
 const CAPACITY_PRESETS = [
@@ -11,6 +11,26 @@ const CAPACITY_PRESETS = [
   '10kW+ Commercial',
 ];
 
+const parseSpecificationsText = (text) => {
+  if (!text) return [];
+  return text.split('\n')
+    .filter(line => line.includes(':'))
+    .map(line => {
+      const idx = line.indexOf(':');
+      return {
+        label: line.slice(0, idx).trim(),
+        value: line.slice(idx + 1).trim()
+      };
+    })
+    .filter(spec => spec.label && spec.value);
+};
+
+const formatSpecificationsJson = (specs) => {
+  if (!specs) return '';
+  const arr = Array.isArray(specs) ? specs : [];
+  return arr.map(spec => `${spec.label}: ${spec.value}`).join('\n');
+};
+
 export default function ProductsPage() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -19,6 +39,11 @@ export default function ProductsPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+
+  const [replaceIndex, setReplaceIndex] = useState(null);
+  const replaceInputRef = useRef(null);
+  
+  const [actionStatus, setActionStatus] = useState(null);
 
   // Form State for Add Product
   const [newProduct, setNewProduct] = useState({
@@ -32,8 +57,11 @@ export default function ProductsPage() {
     warranty: '10-25 Years Warranty',
     stock: '',
     image_url: '',
+    images: [],
     description: '',
-    features: ''
+    features: '',
+    delivery_time: '2-4 Business Days',
+    specifications: ''
   });
 
   // Form State for Edit Product
@@ -52,18 +80,128 @@ export default function ProductsPage() {
   }, []);
 
   const handleProductImageUpload = async (e, isEdit = false) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
     setUploading(true);
-    const uploadedUrl = await uploadMediaFile(file, 'products');
-    if (uploadedUrl) {
+    
+    const uploadedUrls = [];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const uploadedUrl = await uploadMediaFile(file, 'products');
+      if (uploadedUrl) {
+        uploadedUrls.push(uploadedUrl);
+      }
+    }
+
+    if (uploadedUrls.length > 0) {
       if (isEdit) {
-        setEditProduct(prev => ({ ...prev, image_url: uploadedUrl }));
+        setEditProduct(prev => {
+          const currentImages = Array.isArray(prev.images) ? prev.images : (prev.image_url ? [prev.image_url] : []);
+          const updatedImages = [...currentImages, ...uploadedUrls];
+          return {
+            ...prev,
+            images: updatedImages,
+            image_url: prev.image_url || updatedImages[0] || ''
+          };
+        });
       } else {
-        setNewProduct(prev => ({ ...prev, image_url: uploadedUrl }));
+        setNewProduct(prev => {
+          const currentImages = Array.isArray(prev.images) ? prev.images : (prev.image_url ? [prev.image_url] : []);
+          const updatedImages = [...currentImages, ...uploadedUrls];
+          return {
+            ...prev,
+            images: updatedImages,
+            image_url: prev.image_url || updatedImages[0] || ''
+          };
+        });
       }
     }
     setUploading(false);
+  };
+
+  const triggerReplaceImage = (index) => {
+    setReplaceIndex(index);
+    setTimeout(() => {
+      if (replaceInputRef.current) {
+        replaceInputRef.current.value = ""; // clear selector cache to trigger onChange every time
+        replaceInputRef.current.click();
+      }
+    }, 50);
+  };
+
+  const handleReplaceImageUpload = async (e, isEdit = false) => {
+    const file = e.target.files?.[0];
+    if (!file || replaceIndex === null) return;
+    setUploading(true);
+    const uploadedUrl = await uploadMediaFile(file, 'products');
+    if (uploadedUrl) {
+      const setProduct = isEdit ? setEditProduct : setNewProduct;
+      setProduct(prev => {
+        const currentImages = Array.isArray(prev.images) ? [...prev.images] : [];
+        const oldUrl = currentImages[replaceIndex];
+        currentImages[replaceIndex] = uploadedUrl;
+        
+        let newPrimary = prev.image_url;
+        if (prev.image_url === oldUrl) {
+          newPrimary = uploadedUrl;
+        }
+        return {
+          ...prev,
+          images: currentImages,
+          image_url: newPrimary
+        };
+      });
+    }
+    setReplaceIndex(null);
+    setUploading(false);
+  };
+
+  const moveImage = (index, direction, isEdit = false) => {
+    const setProduct = isEdit ? setEditProduct : setNewProduct;
+    setProduct(prev => {
+      const currentImages = Array.isArray(prev.images) ? [...prev.images] : [];
+      if (currentImages.length === 0) return prev;
+      
+      const newIndex = index + direction;
+      if (newIndex < 0 || newIndex >= currentImages.length) return prev;
+      
+      const temp = currentImages[index];
+      currentImages[index] = currentImages[newIndex];
+      currentImages[newIndex] = temp;
+      
+      return {
+        ...prev,
+        images: currentImages
+      };
+    });
+  };
+
+  const removeProductImage = (index, isEdit = false) => {
+    const setProduct = isEdit ? setEditProduct : setNewProduct;
+    setProduct(prev => {
+      const currentImages = Array.isArray(prev.images) ? [...prev.images] : [];
+      const imageToRemove = currentImages[index];
+      const updatedImages = currentImages.filter((_, idx) => idx !== index);
+      
+      let updatedImageUrl = prev.image_url;
+      if (prev.image_url === imageToRemove) {
+        updatedImageUrl = updatedImages[0] || '';
+      }
+      
+      return {
+        ...prev,
+        images: updatedImages,
+        image_url: updatedImageUrl
+      };
+    });
+  };
+
+  const setPrimaryProductImage = (imageUrl, isEdit = false) => {
+    const setProduct = isEdit ? setEditProduct : setNewProduct;
+    setProduct(prev => ({
+      ...prev,
+      image_url: imageUrl
+    }));
   };
 
   const autoGenerateSku = (isEdit = false) => {
@@ -80,6 +218,8 @@ export default function ProductsPage() {
     e.preventDefault();
     if (!newProduct.name || !newProduct.sku || !newProduct.price) return;
 
+    setActionStatus({ type: 'loading', message: 'Creating solar product...' });
+
     const featureList = newProduct.features 
       ? newProduct.features.split('\n').filter(f => f.trim() !== '')
       : [
@@ -88,66 +228,93 @@ export default function ProductsPage() {
           'Eligible for PM Surya Ghar Yojana Government Subsidy'
         ];
     
-    await createProduct({
-      name: newProduct.name,
-      brand: newProduct.brand || 'ENERGY MALL',
-      category_id: newProduct.category_id || null,
-      sku: newProduct.sku,
-      capacity: newProduct.capacity || null,
-      price: parseFloat(newProduct.price),
-      original_price: newProduct.original_price ? parseFloat(newProduct.original_price) : parseFloat(newProduct.price) * 1.18,
-      warranty: newProduct.warranty || '10-25 Years',
-      stock: parseInt(newProduct.stock || 0, 10),
-      image: newProduct.image_url || null,
-      description: newProduct.description,
-      features: featureList,
-      is_active: true
-    });
+    try {
+      await createProduct({
+        name: newProduct.name,
+        brand: newProduct.brand || 'ENERGY MALL',
+        category_id: newProduct.category_id || null,
+        sku: newProduct.sku,
+        capacity: newProduct.capacity || null,
+        price: parseFloat(newProduct.price),
+        original_price: (newProduct.original_price && newProduct.original_price !== '') ? parseFloat(newProduct.original_price) : null,
+        warranty: newProduct.warranty || '10-25 Years',
+        stock: parseInt(newProduct.stock || 0, 10),
+        image: newProduct.image_url || null,
+        images: Array.isArray(newProduct.images) ? newProduct.images : (newProduct.image_url ? [newProduct.image_url] : []),
+        description: newProduct.description,
+        features: featureList,
+        delivery_time: newProduct.delivery_time || '2-4 Business Days',
+        specifications: parseSpecificationsText(newProduct.specifications),
+        is_active: true
+      });
 
-    setNewProduct({
-      name: '',
-      brand: '',
-      category_id: '',
-      sku: '',
-      capacity: '',
-      price: '',
-      original_price: '',
-      warranty: '10-25 Years Warranty',
-      stock: '',
-      image_url: '',
-      description: '',
-      features: ''
-    });
-    setIsModalOpen(false);
-    loadProducts();
+      setActionStatus({ type: 'success', message: `Product "${newProduct.name}" created successfully!` });
+      setTimeout(() => setActionStatus(null), 3000);
+
+      setNewProduct({
+        name: '',
+        brand: '',
+        category_id: '',
+        sku: '',
+        capacity: '',
+        price: '',
+        original_price: '',
+        warranty: '10-25 Years Warranty',
+        stock: '',
+        image_url: '',
+        images: [],
+        description: '',
+        features: '',
+        delivery_time: '2-4 Business Days',
+        specifications: ''
+      });
+      setIsModalOpen(false);
+      loadProducts();
+    } catch (err) {
+      setActionStatus({ type: 'error', message: 'Failed to create product: ' + err.message });
+      setTimeout(() => setActionStatus(null), 5000);
+    }
   };
 
   const handleUpdate = async (e) => {
     e.preventDefault();
     if (!editProduct || !editProduct.id || !editProduct.name) return;
 
+    setActionStatus({ type: 'loading', message: 'Saving product updates & synchronizing media assets...' });
+
     const featureList = editProduct.features 
       ? editProduct.features.split('\n').filter(f => f.trim() !== '')
       : [];
 
-    await updateProduct(editProduct.id, {
-      name: editProduct.name,
-      brand: editProduct.brand || 'ENERGY MALL',
-      category_id: editProduct.category_id || null,
-      sku: editProduct.sku,
-      capacity: editProduct.capacity || null,
-      price: parseFloat(editProduct.price),
-      original_price: editProduct.original_price ? parseFloat(editProduct.original_price) : parseFloat(editProduct.price) * 1.18,
-      warranty: editProduct.warranty,
-      stock: parseInt(editProduct.stock || 0, 10),
-      image: editProduct.image_url || null,
-      description: editProduct.description,
-      features: featureList
-    });
+    try {
+      await updateProduct(editProduct.id, {
+        name: editProduct.name,
+        brand: editProduct.brand || 'ENERGY MALL',
+        category_id: editProduct.category_id || null,
+        sku: editProduct.sku,
+        capacity: editProduct.capacity || null,
+        price: parseFloat(editProduct.price),
+        original_price: (editProduct.original_price && editProduct.original_price !== '') ? parseFloat(editProduct.original_price) : null,
+        warranty: editProduct.warranty,
+        stock: parseInt(editProduct.stock || 0, 10),
+        image: editProduct.image_url || null,
+        images: Array.isArray(editProduct.images) ? editProduct.images : (editProduct.image_url ? [editProduct.image_url] : []),
+        description: editProduct.description,
+        features: featureList,
+        delivery_time: editProduct.delivery_time || '2-4 Business Days',
+        specifications: parseSpecificationsText(editProduct.specifications)
+      });
 
-    setIsEditModalOpen(false);
-    setEditProduct(null);
-    loadProducts();
+      setActionStatus({ type: 'success', message: `Product "${editProduct.name}" saved successfully!` });
+      setTimeout(() => setActionStatus(null), 3000);
+
+      setIsEditModalOpen(false);
+      setEditProduct(null);
+      loadProducts();
+    } catch (err) {
+      setActionStatus({ type: 'error', message: 'Failed to update product: ' + err.message });
+      setTimeout(() => setActionStatus(null), 5000);
+    }
   };
 
   const handleDelete = async (id) => {
@@ -170,8 +337,11 @@ export default function ProductsPage() {
       warranty: product.warranty || '10-25 Years Warranty',
       stock: product.stock !== undefined ? String(product.stock) : '',
       image_url: product.image || product.image_url || '',
+      images: Array.isArray(product.images) ? product.images : (product.image || product.image_url ? [product.image || product.image_url] : []),
       description: product.description || '',
-      features: Array.isArray(product.features) ? product.features.join('\n') : ''
+      features: Array.isArray(product.features) ? product.features.join('\n') : '',
+      delivery_time: product.delivery_time || '2-4 Business Days',
+      specifications: formatSpecificationsJson(product.specifications || product.specs)
     });
     setIsEditModalOpen(true);
   };
@@ -194,6 +364,21 @@ export default function ProductsPage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
+      {actionStatus && (
+        <div className={`p-4 rounded-xl text-sm font-semibold flex items-center justify-between border transition-all ${
+          actionStatus.type === 'loading' ? 'bg-slate-50 border-slate-200 text-slate-700 animate-pulse' :
+          actionStatus.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' :
+          'bg-red-50 border-red-200 text-red-800'
+        }`}>
+          <span className="flex items-center gap-2">
+            {actionStatus.type === 'loading' ? '⏳' : actionStatus.type === 'success' ? '✅' : '❌'}
+            {actionStatus.message}
+          </span>
+          {actionStatus.type !== 'loading' && (
+            <button onClick={() => setActionStatus(null)} className="text-slate-400 hover:text-slate-600 font-bold ml-2">✕</button>
+          )}
+        </div>
+      )}
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -444,32 +629,96 @@ export default function ProductsPage() {
               </div>
 
               {/* Section 3: Product Image Upload */}
-              <div className="space-y-2 bg-emerald-50/50 p-3.5 rounded-xl border border-emerald-200/60">
-                <div className="text-xs font-bold uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
-                  <span>📸</span> Product Media (Supabase Storage)
+              <div className="space-y-3 bg-emerald-50/50 p-3.5 rounded-xl border border-emerald-200/60">
+                <div className="text-xs font-bold uppercase tracking-wider text-emerald-800 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">📸 Product Media ({(newProduct.images || []).length} images)</span>
+                  <span className="text-[10px] text-emerald-600 font-normal">Click ★ to set as featured</span>
                 </div>
 
+                {newProduct.images && newProduct.images.length > 0 ? (
+                  <div className="grid grid-cols-4 gap-2 mb-2">
+                    {newProduct.images.map((imgUrl, index) => {
+                      const isPrimary = newProduct.image_url === imgUrl;
+                      return (
+                        <div key={index} className={`relative rounded-lg border overflow-hidden bg-white p-1 group ${isPrimary ? 'border-amber-400 bg-amber-50/20' : 'border-slate-200'}`}>
+                          <img src={imgUrl} alt={`Preview ${index}`} className="w-full h-14 object-cover rounded" />
+                          
+                          <div className="absolute top-1 left-1 flex gap-1">
+                            <button
+                              type="button"
+                              onClick={() => setPrimaryProductImage(imgUrl, false)}
+                              title={isPrimary ? "Featured Image" : "Set as Featured"}
+                              className={`w-5 h-5 rounded-md flex items-center justify-center text-xs ${isPrimary ? 'bg-amber-400 text-white' : 'bg-slate-900/60 text-amber-200 hover:bg-slate-900'}`}
+                            >
+                              ★
+                            </button>
+                          </div>
+
+                          <div className="absolute top-1 right-1 flex gap-1">
+                            <button
+                              type="button"
+                              onClick={() => triggerReplaceImage(index)}
+                              title="Replace Image"
+                              className="w-5 h-5 rounded-md bg-slate-900/60 text-white hover:bg-emerald-600 flex items-center justify-center text-[10px]"
+                            >
+                              ↻
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => removeProductImage(index, false)}
+                              title="Delete Image"
+                              className="w-5 h-5 rounded-md bg-slate-900/60 text-white hover:bg-red-600 flex items-center justify-center text-xs"
+                            >
+                              ✕
+                            </button>
+                          </div>
+
+                          <div className="absolute bottom-1 left-0 right-0 flex justify-between px-1 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-950/70 py-0.5">
+                            <button
+                              type="button"
+                              disabled={index === 0}
+                              onClick={() => moveImage(index, -1, false)}
+                              className="text-[9px] font-bold text-white disabled:text-slate-500 hover:text-emerald-400"
+                            >
+                              ◀ L
+                            </button>
+                            <button
+                              type="button"
+                              disabled={index === newProduct.images.length - 1}
+                              onClick={() => moveImage(index, 1, false)}
+                              className="text-[9px] font-bold text-white disabled:text-slate-500 hover:text-emerald-400"
+                            >
+                              R ▶
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : null}
+
                 <div className="flex items-center gap-3">
-                  {newProduct.image_url ? (
-                    <div className="relative h-14 w-14 rounded-xl border border-emerald-300 overflow-hidden bg-white shrink-0">
-                      <img src={newProduct.image_url} alt="Preview" className="w-full h-full object-cover" />
-                      <button 
-                        type="button"
-                        onClick={() => setNewProduct({ ...newProduct, image_url: '' })}
-                        className="absolute top-0.5 right-0.5 bg-slate-900/80 text-white rounded-full w-4 h-4 text-[10px] flex items-center justify-center"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ) : null}
                   <div className="flex-1">
                     <input 
                       type="file"
+                      multiple
                       accept="image/*"
                       onChange={(e) => handleProductImageUpload(e, false)}
                       className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-white text-slate-600 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-emerald-100 file:text-emerald-800 hover:file:bg-emerald-200"
                     />
+                    <p className="text-[10px] text-slate-500 mt-1 font-semibold">
+                      💡 Recommended: Square ratio (e.g., 800x800 px) up to 5MB (JPG, PNG, WEBP).
+                    </p>
                     {uploading && <p className="text-[11px] text-emerald-600 mt-1 font-bold animate-pulse">Uploading to Supabase CDN...</p>}
+                    
+                    {/* Hidden replace input */}
+                    <input 
+                      type="file" 
+                      ref={replaceInputRef} 
+                      style={{ display: 'none' }} 
+                      accept="image/*" 
+                      onChange={(e) => handleReplaceImageUpload(e, false)} 
+                    />
                   </div>
                 </div>
               </div>
@@ -545,6 +794,19 @@ export default function ProductsPage() {
                 />
               </div>
 
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Delivery Estimate</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. 2-4 Business Days"
+                    value={newProduct.delivery_time}
+                    onChange={(e) => setNewProduct({ ...newProduct, delivery_time: e.target.value })}
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Technical Highlights (1 per line)</label>
                 <textarea 
@@ -552,6 +814,17 @@ export default function ProductsPage() {
                   placeholder="Monocrystalline PERC cell design&#10;IP68 waterproof rating"
                   value={newProduct.features}
                   onChange={(e) => setNewProduct({ ...newProduct, features: e.target.value })}
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Detailed Specifications (Format: label: value, 1 per line)</label>
+                <textarea 
+                  rows={3}
+                  placeholder="SKU / Model: WAAREE-530W&#10;Certifications: BIS MNRE Approved&#10;Installation: Free Doorstep Delivery"
+                  value={newProduct.specifications}
+                  onChange={(e) => setNewProduct({ ...newProduct, specifications: e.target.value })}
                   className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none font-mono"
                 />
               </div>
@@ -698,32 +971,96 @@ export default function ProductsPage() {
               </div>
 
               {/* Section 3: Product Image Upload */}
-              <div className="space-y-2 bg-emerald-50/50 p-3.5 rounded-xl border border-emerald-200/60">
-                <div className="text-xs font-bold uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
-                  <span>📸</span> Product Media (Supabase Storage)
+              <div className="space-y-3 bg-emerald-50/50 p-3.5 rounded-xl border border-emerald-200/60">
+                <div className="text-xs font-bold uppercase tracking-wider text-emerald-800 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">📸 Product Media ({(editProduct.images || []).length} images)</span>
+                  <span className="text-[10px] text-emerald-600 font-normal">Click ★ to set as featured</span>
                 </div>
 
+                {editProduct.images && editProduct.images.length > 0 ? (
+                  <div className="grid grid-cols-4 gap-2 mb-2">
+                    {editProduct.images.map((imgUrl, index) => {
+                      const isPrimary = editProduct.image_url === imgUrl;
+                      return (
+                        <div key={index} className={`relative rounded-lg border overflow-hidden bg-white p-1 group ${isPrimary ? 'border-amber-400 bg-amber-50/20' : 'border-slate-200'}`}>
+                          <img src={imgUrl} alt={`Preview ${index}`} className="w-full h-14 object-cover rounded" />
+                          
+                          <div className="absolute top-1 left-1 flex gap-1">
+                            <button
+                              type="button"
+                              onClick={() => setPrimaryProductImage(imgUrl, true)}
+                              title={isPrimary ? "Featured Image" : "Set as Featured"}
+                              className={`w-5 h-5 rounded-md flex items-center justify-center text-xs ${isPrimary ? 'bg-amber-400 text-white' : 'bg-slate-900/60 text-amber-200 hover:bg-slate-900'}`}
+                            >
+                              ★
+                            </button>
+                          </div>
+
+                          <div className="absolute top-1 right-1 flex gap-1">
+                            <button
+                              type="button"
+                              onClick={() => triggerReplaceImage(index)}
+                              title="Replace Image"
+                              className="w-5 h-5 rounded-md bg-slate-900/60 text-white hover:bg-emerald-600 flex items-center justify-center text-[10px]"
+                            >
+                              ↻
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => removeProductImage(index, true)}
+                              title="Delete Image"
+                              className="w-5 h-5 rounded-md bg-slate-900/60 text-white hover:bg-red-600 flex items-center justify-center text-xs"
+                            >
+                              ✕
+                            </button>
+                          </div>
+
+                          <div className="absolute bottom-1 left-0 right-0 flex justify-between px-1 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-950/70 py-0.5">
+                            <button
+                              type="button"
+                              disabled={index === 0}
+                              onClick={() => moveImage(index, -1, true)}
+                              className="text-[9px] font-bold text-white disabled:text-slate-500 hover:text-emerald-400"
+                            >
+                              ◀ L
+                            </button>
+                            <button
+                              type="button"
+                              disabled={index === editProduct.images.length - 1}
+                              onClick={() => moveImage(index, 1, true)}
+                              className="text-[9px] font-bold text-white disabled:text-slate-500 hover:text-emerald-400"
+                            >
+                              R ▶
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : null}
+
                 <div className="flex items-center gap-3">
-                  {editProduct.image_url ? (
-                    <div className="relative h-14 w-14 rounded-xl border border-emerald-300 overflow-hidden bg-white shrink-0">
-                      <img src={editProduct.image_url} alt="Preview" className="w-full h-full object-cover" />
-                      <button 
-                        type="button"
-                        onClick={() => setEditProduct({ ...editProduct, image_url: '' })}
-                        className="absolute top-0.5 right-0.5 bg-slate-900/80 text-white rounded-full w-4 h-4 text-[10px] flex items-center justify-center"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ) : null}
                   <div className="flex-1">
                     <input 
                       type="file"
+                      multiple
                       accept="image/*"
                       onChange={(e) => handleProductImageUpload(e, true)}
                       className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-white text-slate-600 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-emerald-100 file:text-emerald-800 hover:file:bg-emerald-200"
                     />
+                    <p className="text-[10px] text-slate-500 mt-1 font-semibold">
+                      💡 Recommended: Square ratio (e.g., 800x800 px) up to 5MB (JPG, PNG, WEBP).
+                    </p>
                     {uploading && <p className="text-[11px] text-emerald-600 mt-1 font-bold animate-pulse">Uploading to Supabase CDN...</p>}
+                    
+                    {/* Hidden replace input */}
+                    <input 
+                      type="file" 
+                      ref={replaceInputRef} 
+                      style={{ display: 'none' }} 
+                      accept="image/*" 
+                      onChange={(e) => handleReplaceImageUpload(e, true)} 
+                    />
                   </div>
                 </div>
               </div>
@@ -794,12 +1131,36 @@ export default function ProductsPage() {
                 />
               </div>
 
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Delivery Estimate</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. 2-4 Business Days"
+                    value={editProduct.delivery_time}
+                    onChange={(e) => setEditProduct({ ...editProduct, delivery_time: e.target.value })}
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Technical Highlights (1 per line)</label>
                 <textarea 
                   rows={2}
                   value={editProduct.features}
                   onChange={(e) => setEditProduct({ ...editProduct, features: e.target.value })}
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Detailed Specifications (Format: label: value, 1 per line)</label>
+                <textarea 
+                  rows={3}
+                  placeholder="SKU / Model: WAAREE-530W&#10;Certifications: BIS MNRE Approved&#10;Installation: Free Doorstep Delivery"
+                  value={editProduct.specifications}
+                  onChange={(e) => setEditProduct({ ...editProduct, specifications: e.target.value })}
                   className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none font-mono"
                 />
               </div>
