@@ -7,22 +7,23 @@ export default function Home() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function loadData() {
-      setLoading(true);
-      const res = await getAnalyticsOverview();
-      if (res) {
-        setData(res);
-      }
-      setLoading(false);
+  const loadData = async () => {
+    setLoading(true);
+    const res = await getAnalyticsOverview();
+    if (res) {
+      setData(res);
     }
+    setLoading(false);
+  };
+
+  useEffect(() => {
     loadData();
   }, []);
 
   const kpis = data?.kpis || [];
   const counts = data?.counts || {};
   const recentOrders = data?.recentOrders || [];
-  const lowStockItems = data?.lowStockProducts || (data?.recentProducts ? data.recentProducts.filter(p => p.stock <= 15) : []);
+  const lowStockItems = data?.lowStockProducts || (data?.recentProducts ? data.recentProducts.filter(p => p.stock <= 20) : []);
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -37,8 +38,17 @@ export default function Home() {
           <p className="text-sm text-slate-500 mt-1">Live metrics and store performance directly from Supabase PostgreSQL database.</p>
         </div>
         <div className="flex gap-3">
+          <button
+            onClick={loadData}
+            disabled={loading}
+            className="p-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 shadow-sm transition-all flex items-center justify-center disabled:opacity-50"
+            title="Refresh Overview"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+
+          </button>
           <Link href="/products" className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-extrabold hover:bg-emerald-700 shadow-sm transition-all flex items-center gap-2">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
             Add Product
           </Link>
           <Link href="/logistics" className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-extrabold hover:bg-slate-800 shadow-sm transition-all flex items-center gap-2">
@@ -46,7 +56,7 @@ export default function Home() {
           </Link>
         </div>
       </div>
-      
+
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {loading ? (
@@ -162,11 +172,10 @@ export default function Home() {
                       <td className="px-5 py-3 font-mono font-bold text-blue-600">{order.order_number || order.id}</td>
                       <td className="px-5 py-3 font-bold text-slate-900">{order.customer_name}</td>
                       <td className="px-5 py-3">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-extrabold border ${
-                          order.status === 'Delivered' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-extrabold border ${order.status === 'Delivered' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
                           order.status === 'Shipped' ? 'bg-purple-50 text-purple-700 border-purple-200' :
-                          'bg-blue-50 text-blue-700 border-blue-200'
-                        }`}>
+                            'bg-blue-50 text-blue-700 border-blue-200'
+                          }`}>
                           {order.status}
                         </span>
                       </td>
@@ -203,11 +212,10 @@ export default function Home() {
                     <p className="text-[11px] text-slate-400 font-mono mt-0.5">{item.sku || 'SKU-GENERAL'}</p>
                   </div>
                   <div className="text-right shrink-0">
-                    <span className={`inline-block px-2 py-0.5 rounded text-[11px] font-extrabold border ${
-                      item.stock === 0 
-                        ? 'bg-rose-100 text-rose-700 border-rose-200' 
-                        : 'bg-amber-50 text-amber-700 border-amber-200'
-                    }`}>
+                    <span className={`inline-block px-2 py-0.5 rounded text-[11px] font-extrabold border ${item.stock === 0
+                      ? 'bg-rose-100 text-rose-700 border-rose-200'
+                      : 'bg-amber-50 text-amber-700 border-amber-200'
+                      }`}>
                       {item.stock === 0 ? 'Out of Stock' : `${item.stock} left`}
                     </span>
                   </div>

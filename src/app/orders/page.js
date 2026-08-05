@@ -64,13 +64,38 @@ export default function OrdersPage() {
       case 'Delivered':
         return 'bg-emerald-50 text-emerald-700 border-emerald-200';
       case 'Shipped':
+      case 'Out for Delivery':
         return 'bg-purple-50 text-purple-700 border-purple-200';
       case 'Cancelled':
+      case 'Returned':
         return 'bg-rose-50 text-rose-700 border-rose-200';
+      case 'Refunded':
+        return 'bg-orange-50 text-orange-700 border-orange-200';
+      case 'Return Requested':
+        return 'bg-yellow-50 text-yellow-700 border-yellow-200';
+      case 'Confirmed':
+        return 'bg-teal-50 text-teal-700 border-teal-200';
+      case 'Packed':
+        return 'bg-indigo-50 text-indigo-700 border-indigo-200';
+      case 'Pending':
+        return 'bg-slate-100 text-slate-600 border-slate-200';
       default:
         return 'bg-blue-50 text-blue-700 border-blue-200';
     }
   };
+
+  const getPaymentStatusStyle = (status) => {
+    switch (status) {
+      case 'Paid': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+      case 'Failed': return 'bg-rose-50 text-rose-700 border-rose-200';
+      case 'Refunded': return 'bg-orange-50 text-orange-700 border-orange-200';
+      case 'Partially Refunded': return 'bg-amber-50 text-amber-700 border-amber-200';
+      default: return 'bg-amber-50 text-amber-700 border-amber-200';
+    }
+  };
+
+  const ORDER_STATUSES = ['Pending', 'Confirmed', 'Processing', 'Packed', 'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled', 'Return Requested', 'Returned', 'Refunded'];
+  const PAYMENT_STATUSES = ['Pending', 'Paid', 'Failed', 'Refunded', 'Partially Refunded'];
 
   const filteredOrders = orders.filter(o => 
     (o.order_number || o.id).toLowerCase().includes(search.toLowerCase()) ||
@@ -120,7 +145,7 @@ export default function OrdersPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-1.5 text-xs">
-            {['All', 'Processing', 'Shipped', 'Delivered', 'Cancelled'].map((tab) => (
+            {['All', 'Pending', 'Confirmed', 'Processing', 'Packed', 'Shipped', 'Delivered', 'Cancelled', 'Refunded'].map((tab) => (
               <button 
                 key={tab} 
                 onClick={() => setActiveTab(tab)}
@@ -171,10 +196,8 @@ export default function OrdersPage() {
                     </td>
 
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-0.5 rounded text-[11px] font-extrabold border ${
-                        order.payment_status === 'Paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'
-                      }`}>
-                        {order.payment_status || 'Paid'}
+                      <span className={`px-2 py-0.5 rounded text-[11px] font-extrabold border ${getPaymentStatusStyle(order.payment_status || 'Pending')}`}>
+                        {order.payment_status || 'Pending'}
                       </span>
                     </td>
 
@@ -270,12 +293,9 @@ export default function OrdersPage() {
                     <select
                       value={selectedOrder.status}
                       onChange={(e) => handleStatusChange(selectedOrder.id, e.target.value)}
-                      className={`text-xs font-bold px-2.5 py-1 rounded-lg border focus:outline-none cursor-pointer ${getStatusStyle(selectedOrder.status)}`}
+                      className={`text-xs font-extrabold px-3 py-1.5 rounded-lg border focus:outline-none cursor-pointer ${getStatusStyle(selectedOrder.status)}`}
                     >
-                      <option value="Processing">Processing</option>
-                      <option value="Shipped">Shipped</option>
-                      <option value="Delivered">Delivered</option>
-                      <option value="Cancelled">Cancelled</option>
+                      {ORDER_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                   ) : (
                     <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${getStatusStyle(selectedOrder.status)}`}>
@@ -287,14 +307,12 @@ export default function OrdersPage() {
                     <select
                       value={selectedOrder.payment_status || 'Paid'}
                       onChange={(e) => handlePaymentStatusChange(selectedOrder.id, e.target.value)}
-                      className="text-xs font-bold px-2.5 py-1 rounded-lg border border-slate-200 bg-white cursor-pointer"
+                      className={`text-xs font-bold px-2.5 py-1 rounded-lg border cursor-pointer ${getPaymentStatusStyle(selectedOrder.payment_status || 'Pending')}`}
                     >
-                      <option value="Paid">Paid</option>
-                      <option value="Unpaid">Unpaid</option>
-                      <option value="Refunded">Refunded</option>
+                      {PAYMENT_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                   ) : (
-                    <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-bold text-xs border border-emerald-200">
+                    <span className={`px-2 py-0.5 rounded text-[11px] font-extrabold border ${getPaymentStatusStyle(selectedOrder.payment_status || 'Pending')}`}>
                       {selectedOrder.payment_status || 'Paid'}
                     </span>
                   )}

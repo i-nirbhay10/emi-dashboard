@@ -365,3 +365,27 @@ export async function getPayments(status) {
   return Array.isArray(data) ? data : [];
 }
 
+// Inventory Management API
+export async function getInventoryHistory(product_id) {
+  const query = product_id ? `?product_id=${encodeURIComponent(product_id)}` : '';
+  const data = await apiRequest(`/inventory/history${query}`);
+  return Array.isArray(data) ? data : [];
+}
+
+export async function adjustInventory(payload) {
+  return await apiRequest('/inventory/adjust', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function getLowStockItems() {
+  const data = await apiRequest('/inventory/low-stock');
+  return Array.isArray(data) ? data : [];
+}
+
+// Admin Notifications API
+export async function getAdminNotifications() {
+  const data = await apiRequest('/notifications');
+  return Array.isArray(data) ? data : [];
+}
