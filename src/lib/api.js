@@ -195,6 +195,10 @@ export async function deleteOrder(id) {
   });
 }
 
+export function getOrderInvoiceUrl(id) {
+  return `${API_BASE}/orders/${id}/invoice`;
+}
+
 // Customers API
 export async function getCustomers() {
   const data = await apiRequest('/customers');
