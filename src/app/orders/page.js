@@ -293,7 +293,7 @@ export default function OrdersPage() {
                     <select
                       value={selectedOrder.status}
                       onChange={(e) => handleStatusChange(selectedOrder.id, e.target.value)}
-                      className={`text-xs font-extrabold px-3 py-1.5 rounded-lg border focus:outline-none cursor-pointer ${getStatusStyle(selectedOrder.status)}`}
+                      className={`text-xs font-extrabold pl-3 pr-7 py-1.5 w-36 rounded-lg border focus:outline-none cursor-pointer ${getStatusStyle(selectedOrder.status)}`}
                     >
                       {ORDER_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
@@ -307,7 +307,7 @@ export default function OrdersPage() {
                     <select
                       value={selectedOrder.payment_status || 'Paid'}
                       onChange={(e) => handlePaymentStatusChange(selectedOrder.id, e.target.value)}
-                      className={`text-xs font-bold px-2.5 py-1 rounded-lg border cursor-pointer ${getPaymentStatusStyle(selectedOrder.payment_status || 'Pending')}`}
+                      className={`text-xs font-extrabold pl-3 pr-7 py-1.5 w-32 rounded-lg border focus:outline-none cursor-pointer ${getPaymentStatusStyle(selectedOrder.payment_status || 'Pending')}`}
                     >
                       {PAYMENT_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
@@ -336,7 +336,11 @@ export default function OrdersPage() {
                   )}
                 </div>
                 <div className="font-semibold text-slate-800">
-                  {selectedOrder.shipping_address.house || ''} {selectedOrder.shipping_address.street || ''}, {selectedOrder.shipping_address.city || ''}, {selectedOrder.shipping_address.state || ''} - <span className="font-mono font-bold">{selectedOrder.shipping_address.pincode}</span>
+                  {[
+                    [selectedOrder.shipping_address.house, selectedOrder.shipping_address.street].filter(Boolean).join(' '),
+                    selectedOrder.shipping_address.city,
+                    selectedOrder.shipping_address.state
+                  ].filter(Boolean).join(', ')} - <span className="font-mono font-bold">{selectedOrder.shipping_address.pincode}</span>
                 </div>
               </div>
             )}
