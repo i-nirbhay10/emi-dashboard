@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from 'react';
-import { getUsers, createUser, updateUser, deleteUser, getRoles, createRole, updateRole, deleteRole } from '../../lib/api';
+import { getUsers, createUser, updateUser, deleteUser, getRoles, createRole, updateRole, deleteRole, getLogisticsHubs } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import { MODULES, ACTIONS, getDefaultPermissionsForRole, hasPermission } from '../../lib/rbac';
 
@@ -14,6 +14,7 @@ export default function UsersPage() {
   const [activeTab, setActiveTab] = useState('members'); // 'members' | 'roles'
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
+  const [hubs, setHubs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('All');
@@ -55,6 +56,7 @@ export default function UsersPage() {
     password: '',
     role: 'Admin', // Default role is Admin
     status: 'Active',
+    hub_id: '',
     permissions: getDefaultPermissionsForRole('Admin')
   });
 
@@ -68,9 +70,14 @@ export default function UsersPage() {
   });
 
   const loadData = async () => {
-    const [userData, roleData] = await Promise.all([getUsers(), getRoles()]);
+    const [userData, roleData, hubsData] = await Promise.all([
+      getUsers(),
+      getRoles(),
+      getLogisticsHubs()
+    ]);
     setUsers(userData || []);
     setRoles(roleData || []);
+    setHubs(hubsData || []);
     setLoading(false);
   };
 
@@ -103,7 +110,8 @@ export default function UsersPage() {
       password: formUser.password ? formUser.password.trim() : null,
       role: assignedRole,
       status: formUser.status || 'Active',
-      permissions: assignedPerms
+      permissions: assignedPerms,
+      hub_id: formUser.hub_id || null
     });
 
     setIsAddUserModalOpen(false);
@@ -119,7 +127,8 @@ export default function UsersPage() {
       name: formUser.name,
       email: formUser.email,
       role: formUser.role,
-      status: formUser.status
+      status: formUser.status,
+      hub_id: formUser.hub_id || null
     };
     if (isSuperAdmin && formUser.permissions) {
       updatePayload.permissions = formUser.permissions;
@@ -487,6 +496,7 @@ export default function UsersPage() {
                                       password: '',
                                       role: roleName,
                                       status: u.status || 'Active',
+                                      hub_id: u.hub_id || '',
                                       permissions: getPermissionsForUserRole(roleName, u.permissions)
                                     });
                                     setIsEditUserModalOpen(true);
@@ -858,6 +868,26 @@ export default function UsersPage() {
                 </select>
               </div>
 
+              {formUser.role !== 'Super Admin' && (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
+                    Linked Fulfillment Hub <span className="text-slate-400 font-normal">(Optional)</span>
+                  </label>
+                  <select 
+                    value={formUser.hub_id || ''}
+                    onChange={(e) => setFormUser({ ...formUser, hub_id: e.target.value || null })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:outline-none bg-white font-semibold"
+                  >
+                    <option value="">No Hub Association (Central Admin)</option>
+                    {hubs.map(hub => (
+                      <option key={hub.id} value={hub.id}>
+                        {hub.name} ({hub.hub_code})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <div className="flex justify-end gap-3 pt-2">
                 <button 
                   type="button"
@@ -920,6 +950,26 @@ export default function UsersPage() {
                   ))}
                 </select>
               </div>
+
+              {formUser.role !== 'Super Admin' && (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
+                    Linked Fulfillment Hub <span className="text-slate-400 font-normal">(Optional)</span>
+                  </label>
+                  <select 
+                    value={formUser.hub_id || ''}
+                    onChange={(e) => setFormUser({ ...formUser, hub_id: e.target.value || null })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:outline-none bg-white font-semibold"
+                  >
+                    <option value="">No Hub Association (Central Admin)</option>
+                    {hubs.map(hub => (
+                      <option key={hub.id} value={hub.id}>
+                        {hub.name} ({hub.hub_code})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1">Account Status</label>

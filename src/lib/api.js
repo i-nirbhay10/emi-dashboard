@@ -67,6 +67,10 @@ export async function getLogisticsHubs() {
   return Array.isArray(data) ? data : [];
 }
 
+export async function getLogisticsHubDetails(id) {
+  return await apiRequest(`/logistics/hubs/${id}/details`);
+}
+
 export async function createLogisticsHub(data) {
   return await apiRequest('/logistics/hubs', {
     method: 'POST',
@@ -378,6 +382,13 @@ export async function getInventoryHistory(product_id) {
 
 export async function adjustInventory(payload) {
   return await apiRequest('/inventory/adjust', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function transferInventory(payload) {
+  return await apiRequest('/inventory/transfer', {
     method: 'POST',
     body: JSON.stringify(payload),
   });

@@ -11,6 +11,7 @@ import {
 } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import { hasPermission } from '../../lib/rbac';
+import Link from 'next/link';
 
 export default function LogisticsPage() {
   const { user: currentUser } = useAuth();
@@ -54,6 +55,21 @@ export default function LogisticsPage() {
     cod: true,
     express: true,
   });
+
+  const handleOpenAddPin = () => {
+    setPinForm({
+      pincode: '',
+      city: '',
+      district: '',
+      state: '',
+      hubId: '',
+      days: '1-2 Days',
+      cod: true,
+      express: true,
+    });
+    setPostalVerifiedInfo(null);
+    setIsPinModalOpen(true);
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -207,6 +223,21 @@ export default function LogisticsPage() {
     setTimeout(() => setToast(null), 3000);
   };
 
+  const handleEditPin = (pin) => {
+    setPinForm({
+      pincode: pin.pincode,
+      city: pin.city,
+      district: pin.district || '',
+      state: pin.state,
+      hubId: pin.hubId || pin.hub_id || '',
+      days: pin.estimated_days || pin.days || '1-2 Days',
+      cod: pin.is_cod_available !== undefined ? pin.is_cod_available : (pin.cod !== undefined ? pin.cod : true),
+      express: pin.is_express_available !== undefined ? pin.is_express_available : (pin.express !== undefined ? pin.express : true),
+    });
+    setPostalVerifiedInfo(null);
+    setIsPinModalOpen(true);
+  };
+
   const handleDeletePin = async (id, pincode) => {
     if (!canDelete) return;
     if (!confirm(`Are you sure you want to remove PIN ${pincode} from serviceable network?`)) return;
@@ -273,11 +304,7 @@ export default function LogisticsPage() {
           ) : (
             canCreate && (
               <button 
-                onClick={() => {
-                  setPinForm({ pincode: '', city: '', district: '', state: '', hubId: hubs[0]?.id || '', days: '1-2 Days', cod: true, express: true });
-                  setPostalVerifiedInfo(null);
-                  setIsPinModalOpen(true);
-                }}
+                onClick={handleOpenAddPin}
                 className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-extrabold hover:bg-emerald-700 transition-all flex items-center gap-1.5 shadow-sm"
               >
                 <span>+ Add Serviceable PIN Code</span>
@@ -360,12 +387,20 @@ export default function LogisticsPage() {
                 </div>
               </div>
 
-              {(canEdit || canDelete) && (
-                <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 text-xs">
+              {(canEdit || canDelete || canView) && (
+                <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 text-xs">
+                  {canView && (
+                    <Link 
+                      href={`/logistics/${hub.id}`}
+                      className="px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg font-bold transition-all border border-emerald-200"
+                    >
+                      View Dashboard ➔
+                    </Link>
+                  )}
                   {canEdit && (
                     <button 
                       onClick={() => handleOpenEditHub(hub)}
-                      className="px-3 py-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg font-bold transition-all"
+                      className="px-3 py-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg font-bold transition-all border border-slate-200"
                     >
                       Edit Depot
                     </button>
@@ -415,18 +450,36 @@ export default function LogisticsPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-emerald-700 font-extrabold">{pin.days || '1-2 Days'}</td>
-                      <td className="px-4 py-3 flex gap-1">
-                        {pin.cod && <span className="px-2 py-0.5 rounded bg-green-50 text-green-700 text-[10px] font-bold border border-green-200">COD Available</span>}
-                        {pin.express && <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-[10px] font-bold border border-blue-200">Express Shipping</span>}
+                      <td className="px-4 py-3 flex flex-col gap-1">
+                        {pin.cod ? (
+                          <span className="px-2 py-0.5 rounded bg-green-50 text-green-700 text-[10px] font-bold border border-green-200">✓ COD Available</span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded bg-rose-50 text-rose-700 text-[10px] font-bold border border-rose-200">✕ No COD</span>
+                        )}
+                        {pin.express ? (
+                          <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-[10px] font-bold border border-blue-200">✓ Express Available</span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-bold border border-slate-200">✕ No Express</span>
+                        )}
                       </td>
-                      {canDelete && (
-                        <td className="px-4 py-3 text-right">
-                          <button
-                            onClick={() => handleDeletePin(pin.id, pin.pincode)}
-                            className="px-2.5 py-1 bg-rose-50 text-rose-700 hover:bg-rose-100 rounded-lg text-[11px] font-bold transition-all border border-rose-200"
-                          >
-                            Remove
-                          </button>
+                      {(canEdit || canDelete) && (
+                        <td className="px-4 py-3 text-right flex justify-end gap-1">
+                          {canEdit && (
+                            <button
+                              onClick={() => handleEditPin(pin)}
+                              className="px-2.5 py-1 bg-slate-50 text-slate-700 hover:bg-slate-100 rounded-lg text-[11px] font-bold transition-all border border-slate-200"
+                            >
+                              Edit
+                            </button>
+                          )}
+                          {canDelete && (
+                            <button
+                              onClick={() => handleDeletePin(pin.id, pin.pincode)}
+                              className="px-2.5 py-1 bg-rose-50 text-rose-700 hover:bg-rose-100 rounded-lg text-[11px] font-bold transition-all border border-rose-200"
+                            >
+                              Remove
+                            </button>
+                          )}
                         </td>
                       )}
                     </tr>
@@ -492,8 +545,32 @@ export default function LogisticsPage() {
                   value={hubForm.address} 
                   onChange={(e) => setHubForm({ ...hubForm, address: e.target.value })}
                   placeholder="e.g. Industrial Logistics Corridor"
-                  className="w-full px-3 py-2 border rounded-lg"
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500"
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Contact Phone</label>
+                  <input 
+                    type="text" 
+                    value={hubForm.contactPhone || ''} 
+                    onChange={(e) => setHubForm({ ...hubForm, contactPhone: e.target.value })}
+                    placeholder="e.g. +91 9876543210"
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Status</label>
+                  <select 
+                    value={hubForm.status} 
+                    onChange={(e) => setHubForm({ ...hubForm, status: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-lg bg-white focus:ring-2 focus:ring-emerald-500"
+                  >
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                  </select>
+                </div>
               </div>
 
               <div className="flex justify-end gap-2 pt-3 border-t">
@@ -584,6 +661,33 @@ export default function LogisticsPage() {
                     <option key={h.id} value={h.id}>{h.name} ({h.city})</option>
                   ))}
                 </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">COD Available *</label>
+                  <select 
+                    value={pinForm.cod ? 'true' : 'false'} 
+                    onChange={(e) => setPinForm({ ...pinForm, cod: e.target.value === 'true' })}
+                    className="w-full px-3 py-2 border rounded-lg font-bold bg-white"
+                    required
+                  >
+                    <option value="true">Yes</option>
+                    <option value="false">No</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Express Delivery *</label>
+                  <select 
+                    value={pinForm.express ? 'true' : 'false'} 
+                    onChange={(e) => setPinForm({ ...pinForm, express: e.target.value === 'true' })}
+                    className="w-full px-3 py-2 border rounded-lg font-bold bg-white"
+                    required
+                  >
+                    <option value="true">Yes</option>
+                    <option value="false">No</option>
+                  </select>
+                </div>
               </div>
 
               <div className="flex justify-end gap-2 pt-3 border-t">
