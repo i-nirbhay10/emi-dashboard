@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
+import { apiRequest } from '../../lib/api';
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState({
@@ -16,15 +17,9 @@ export default function SettingsPage() {
 
   const fetchSettings = async () => {
     try {
-      // Fetching from the new admin settings endpoint
-      const res = await fetch('http://localhost:5000/api/v1/admin/settings', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}` // assuming token is here
-        }
-      });
-      const data = await res.json();
-      if (data.success && data.settings) {
-        setSettings(data.settings);
+      const data = await apiRequest('/settings');
+      if (data) {
+        setSettings(data);
       }
     } catch (err) {
       console.error('Error fetching settings:', err);
@@ -43,19 +38,14 @@ export default function SettingsPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const res = await fetch('http://localhost:5000/api/v1/admin/settings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
+      const data = await apiRequest('/settings', {
+        method: 'PUT',
         body: JSON.stringify(settings)
       });
-      const data = await res.json();
-      if (data.success) {
+      if (data) {
         alert('Settings saved successfully!');
       } else {
-        alert('Failed to save settings: ' + data.message);
+        alert('Failed to save settings.');
       }
     } catch (err) {
       console.error('Error saving settings:', err);

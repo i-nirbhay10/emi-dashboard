@@ -1,6 +1,6 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002/api/v1/admin';
 
-async function apiRequest(endpoint, options = {}) {
+export async function apiRequest(endpoint, options = {}) {
   try {
     let authUser = null;
     try {
@@ -403,4 +403,17 @@ export async function getLowStockItems() {
 export async function getAdminNotifications() {
   const data = await apiRequest('/notifications');
   return Array.isArray(data) ? data : [];
+}
+
+// App Version Management
+export async function getAppVersions() {
+  const data = await apiRequest('/app-versions');
+  return Array.isArray(data) ? data : [];
+}
+
+export async function updateAppVersion(platform, data) {
+  return await apiRequest(`/app-versions/${platform}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
 }
