@@ -1,6 +1,7 @@
 "use client";
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
 import { hasPermission } from '../lib/rbac';
@@ -42,10 +43,8 @@ export default function Sidebar({ onNavigate }) {
       {/* Brand Header */}
       <div className="h-16 flex items-center px-4 border-b border-slate-100 mb-4 shrink-0">
         <div className="flex items-center gap-2.5 min-w-0 w-full">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-green-500 to-emerald-700 text-white flex items-center justify-center shadow-md shadow-green-600/20 shrink-0">
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-            </svg>
+          <div className="w-9 h-9 shrink-0 relative flex items-center justify-center">
+            <Image src="/logo.png" alt="Logo" width={36} height={36} className="object-contain" />
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center justify-between gap-1">

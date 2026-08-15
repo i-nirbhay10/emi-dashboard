@@ -1,5 +1,6 @@
 "use client";
-import React, { useState } from 'react';
+import { useState } from 'react';
+import Image from 'next/image';
 import { getUsers, changeUserPassword } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 
@@ -102,10 +103,8 @@ export default function LoginPage() {
       <div className="max-w-md w-full">
         {/* Brand/Logo Area */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-green-600 rounded-2xl mx-auto flex items-center justify-center shadow-lg shadow-green-600/20 mb-4">
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
+          <div className="w-16 h-16 relative mx-auto flex items-center justify-center mb-4">
+            <Image src="/logo.png" alt="Logo" width={64} height={64} className="object-contain drop-shadow-md rounded-2xl" />
           </div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">EnergyMallIndia CMS</h1>
           <p className="text-sm text-slate-500 mt-2">Sign in to your admin dashboard</p>
