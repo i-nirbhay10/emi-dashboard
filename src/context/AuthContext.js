@@ -1,6 +1,7 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { checkSessionAPI, loginAPI, logoutAPI } from '../lib/api';
 
 const AuthContext = createContext();
 
@@ -10,24 +11,20 @@ export function AuthProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const syncAuthFromStorage = () => {
+  const syncAuthFromStorage = async () => {
     try {
-      const auth = localStorage.getItem('emi_admin_auth');
-      const storedUser = localStorage.getItem('emi_admin_user');
+      setLoading(true);
+      const res = await checkSessionAPI();
       
-      if (auth === 'true') {
+      if (res && res.success) {
         setIsAuthenticated(true);
-        if (storedUser) {
-          setUser(JSON.parse(storedUser));
-        } else {
-          setUser({ name: 'Super Admin', email: 'admin@energymall.in', role: 'Super Admin' });
-        }
+        setUser(res.data);
       } else {
         setIsAuthenticated(false);
         setUser(null);
       }
     } catch (e) {
-      console.warn('Failed to sync auth from storage', e);
+      console.warn('Failed to sync auth from backend', e);
       setIsAuthenticated(false);
       setUser(null);
     } finally {
@@ -36,58 +33,41 @@ export function AuthProvider({ children }) {
   };
 
   useEffect(() => {
-    Promise.resolve().then(() => {
-      syncAuthFromStorage();
-    });
-
-    const handleAuthChange = () => {
-      syncAuthFromStorage();
-    };
-
-    window.addEventListener('emi-auth-change', handleAuthChange);
-    window.addEventListener('storage', handleAuthChange);
-
-    return () => {
-      window.removeEventListener('emi-auth-change', handleAuthChange);
-      window.removeEventListener('storage', handleAuthChange);
-    };
+    syncAuthFromStorage();
+    // We remove the old localStorage event listeners because session is now securely
+    // managed by HttpOnly cookies on the backend.
   }, []);
 
-  const login = (userData) => {
+  const login = async (email, password) => {
     try {
-      // 1. Clear prior session cache & tokens
-      sessionStorage.clear();
-      localStorage.setItem('emi_admin_auth', 'true');
-      const userPayload = userData || { name: 'Super Admin', email: 'admin@energymall.in', role: 'Super Admin' };
-      localStorage.setItem('emi_admin_user', JSON.stringify(userPayload));
-
-      setUser(userPayload);
-      setIsAuthenticated(true);
-
-      // 2. Broadcast auth change event to active components
-      window.dispatchEvent(new Event('emi-auth-change'));
-
-      // 3. Immediately transition to dashboard with fresh route mount
-      window.location.replace('/');
+      const res = await loginAPI(email, password);
+      if (res && res.success) {
+        setUser(res.data);
+        setIsAuthenticated(true);
+        
+        window.dispatchEvent(new Event('emi-auth-change'));
+        
+        if (res.data.must_change_password) {
+          return { success: true, requirePasswordChange: true, user: res.data };
+        }
+        
+        window.location.replace('/');
+        return { success: true };
+      }
+      return { success: false, message: res?.message || 'Invalid credentials' };
     } catch (e) {
       console.error('Login error', e);
+      return { success: false, message: 'Server error during login' };
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
     try {
-      // 1. Clear all local & session auth tokens/cache
-      localStorage.removeItem('emi_admin_auth');
-      localStorage.removeItem('emi_admin_user');
-      sessionStorage.clear();
-
+      await logoutAPI();
       setUser(null);
       setIsAuthenticated(false);
-
-      // 2. Broadcast auth change event
+      
       window.dispatchEvent(new Event('emi-auth-change'));
-
-      // 3. Instantly navigate to login page without waiting for re-render
       window.location.replace('/login');
     } catch (e) {
       console.error('Logout error', e);

@@ -2,17 +2,10 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002/api/v
 
 export async function apiRequest(endpoint, options = {}) {
   try {
-    let authUser = null;
-    try {
-      const stored = typeof window !== 'undefined' ? localStorage.getItem('emi_admin_user') : null;
-      if (stored) authUser = JSON.parse(stored);
-    } catch(e){}
-
     const res = await fetch(`${API_BASE}${endpoint}`, {
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
-        'x-user-role': authUser?.role || 'Super Admin',
-        'x-user-email': authUser?.email || 'admin@energymall.in',
         ...options.headers,
       },
       ...options,
@@ -33,22 +26,13 @@ export async function apiRequest(endpoint, options = {}) {
 // Media Upload API (Supabase Storage)
 export async function uploadMediaFile(file, bucket = 'products') {
   try {
-    let authUser = null;
-    try {
-      const stored = typeof window !== 'undefined' ? localStorage.getItem('emi_admin_user') : null;
-      if (stored) authUser = JSON.parse(stored);
-    } catch(e){}
-
     const formData = new FormData();
     formData.append('file', file);
     formData.append('bucket', bucket);
 
     const res = await fetch(`${API_BASE}/upload`, {
       method: 'POST',
-      headers: {
-        'x-user-role': authUser?.role || 'Super Admin',
-        'x-user-email': authUser?.email || 'admin@energymall.in',
-      },
+      credentials: 'include',
       body: formData,
     });
 
@@ -416,4 +400,43 @@ export async function updateAppVersion(platform, data) {
     method: 'PUT',
     body: JSON.stringify(data),
   });
+}
+
+// Secure Authentication API
+export async function loginAPI(email, password) {
+  try {
+    const res = await fetch(`${API_BASE}/auth/login`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    return res.json();
+  } catch (err) {
+    return { success: false, message: 'Network error during login.' };
+  }
+}
+
+export async function logoutAPI() {
+  try {
+    const res = await fetch(`${API_BASE}/auth/logout`, {
+      method: 'POST',
+      credentials: 'include'
+    });
+    return res.json();
+  } catch (err) {
+    return { success: false, message: 'Network error during logout.' };
+  }
+}
+
+export async function checkSessionAPI() {
+  try {
+    const res = await fetch(`${API_BASE}/auth/me`, {
+      method: 'GET',
+      credentials: 'include'
+    });
+    return res.json();
+  } catch (err) {
+    return { success: false, message: 'Network error during session check.' };
+  }
 }
